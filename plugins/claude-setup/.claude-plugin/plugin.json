@@ -1,0 +1,7 @@
+{
+  "name": "claude-setup",
+  "description": "Skille do konfiguracji samego Claude Code (status line itp.)",
+  "author": {
+    "name": "Patryk Chmielewski"
+  }
+}
