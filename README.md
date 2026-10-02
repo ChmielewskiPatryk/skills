@@ -60,7 +60,7 @@ Aktualne pluginy:
 | --- | --- | --- |
 | `claude-setup` | `/claude-setup:context-statusline` | Konfiguruje `ccstatusline`, żeby status line pokazywał zużycie kontekstu |
 | `java-backend` | `/java-backend:planning-jira-implementation` | Tworzy plan implementacji backendu z zadania Jira i powiązanej analizy systemowej w Confluence → `IMPLEMENTATION_PLAN/IMPLEMENTATION_PLAN_<KLUCZ>.md`. Wymaga dostępu do Jiry i Confluence (dowolny serwer MCP, CLI albo REST API z tokenem). |
-| | `/java-backend:reviewing-java-commits` | Code review jednego commita Java (standardy projektu + jakość kodu), raport po polsku → `CODE_REVIEW/<gałąź>.md` |
+| | `/java-backend:reviewing-java-commits` | Code review pull requesta Java z Bitbucketa (standardy projektu + jakość kodu + zgodność z analizą systemową z Confluence), raport po polsku → `CODE_REVIEW/<gałąź>.md`. Przyjmuje dwa linki: pull request i analizę; bez linku do analizy przegląd nadal się wykonuje, ale raport to odnotowuje. |
 
 ---
 
@@ -480,7 +480,7 @@ claude --plugin-dir ./plugins/claude-setup                    # testuj lokalnie
 /reload-plugins                                               # przeładuj po zmianach
 /claude-setup:context-statusline                              # użyj skilla
 /java-backend:planning-jira-implementation PROJ-123           # plan implementacji z Jiry
-/java-backend:reviewing-java-commits HEAD                     # code review commita
+/java-backend:reviewing-java-commits <link-PR> <link-analizy>  # code review pull requesta
 ```
 
 Dokumentacja:
