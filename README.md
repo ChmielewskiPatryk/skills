@@ -59,7 +59,7 @@ Aktualne pluginy:
 | Plugin | Skille | Opis |
 | --- | --- | --- |
 | `claude-setup` | `/claude-setup:context-statusline` | Konfiguruje `ccstatusline`, żeby status line pokazywał zużycie kontekstu |
-| `java-backend` | `/java-backend:planning-jira-implementation` | Tworzy plan implementacji backendu z zadania Jira i powiązanej analizy systemowej w Confluence → `IMPLEMENTATION_PLAN/IMPLEMENTATION_PLAN_<KLUCZ>.md`. Wymaga dostępu do Jiry i Confluence (dowolny serwer MCP, CLI albo REST API z tokenem). |
+| `java-backend` | `/java-backend:planning-jira-implementation` | Tworzy plan implementacji backendu z zadania Jira i powiązanej analizy systemowej w Confluence → `IMPLEMENTATION_PLAN/IMPLEMENTATION_PLAN_<KLUCZ>.md`. Wymaga dostępu do Jiry i Confluence (dowolny serwer MCP, CLI albo REST API z tokenem). Zapisuje też lokalną kopię analizy w `IMPLEMENTATION_PLAN/.analiza/` i zadaje pytania z cytatem oraz odnośnikiem do konkretnego fragmentu. |
 | | `/java-backend:reviewing-java-commits` | Code review pull requesta Java z Bitbucketa (standardy projektu + jakość kodu + zgodność z analizą systemową z Confluence), raport po polsku → `CODE_REVIEW/<gałąź>.md`. Przyjmuje dwa linki: pull request i analizę; bez linku do analizy przegląd nadal się wykonuje, ale raport to odnotowuje. |
 
 ---
