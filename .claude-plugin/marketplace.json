@@ -3,7 +3,7 @@
   "owner": {
     "name": "Patryk Chmielewski"
   },
-  "description": "Prywatny marketplace skilli do Claude Code",
+  "description": "Marketplace skilli do Claude Code",
   "plugins": [
     {
       "name": "claude-setup",
@@ -13,7 +13,7 @@
     {
       "name": "java-backend",
       "source": "./plugins/java-backend",
-      "description": "Skille do pracy nad backendem Java (planowanie zadań z Jiry, code review commitów)"
+      "description": "Skille do pracy nad backendem Java (planowanie zadań z Jiry, code review commitów, analiza wykonalności stron Confluence)"
     }
   ]
 }

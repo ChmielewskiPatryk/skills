@@ -1,6 +1,6 @@
-# skills — prywatny marketplace skilli do Claude Code
+# skills — marketplace skilli do Claude Code
 
-To repozytorium to **marketplace pluginów Claude Code**. Każdy plugin to paczka skilli. Claude Code klonuje repo przez Gita, więc repo może zostać **prywatne** — wystarczy, że maszyna, na której instalujesz, ma do niego dostęp (klucz SSH albo token).
+To repozytorium to **marketplace pluginów Claude Code**. Każdy plugin to paczka skilli. Claude Code klonuje repo przez Gita — repo jest publiczne, więc instalacja nie wymaga żadnej dodatkowej konfiguracji dostępu.
 
 - Nazwa marketplace: `chmielewski-skills`
 - Repo: `ChmielewskiPatryk/skills`
@@ -9,17 +9,16 @@ To repozytorium to **marketplace pluginów Claude Code**. Każdy plugin to paczk
 
 1. [Struktura repo](#1-struktura-repo)
 2. [Wymagania](#2-wymagania)
-3. [Dostęp do prywatnego repo (jednorazowo na maszynę)](#3-dostęp-do-prywatnego-repo-jednorazowo-na-maszynę)
-4. [Instalacja skilli](#4-instalacja-skilli)
-5. [Używanie skilli](#5-używanie-skilli)
-6. [Aktualizacje](#6-aktualizacje)
-7. [Zarządzanie pluginami](#7-zarządzanie-pluginami)
-8. [Dodawanie nowego skilla](#8-dodawanie-nowego-skilla)
-9. [Dodawanie nowego pluginu](#9-dodawanie-nowego-pluginu)
-10. [Wersjonowanie](#10-wersjonowanie)
-11. [Włączanie pluginów dla konkretnego projektu](#11-włączanie-pluginów-dla-konkretnego-projektu)
-12. [Rozwiązywanie problemów](#12-rozwiązywanie-problemów)
-13. [Ściągawka komend](#13-ściągawka-komend)
+3. [Instalacja skilli](#3-instalacja-skilli)
+4. [Używanie skilli](#4-używanie-skilli)
+5. [Aktualizacje](#5-aktualizacje)
+6. [Zarządzanie pluginami](#6-zarządzanie-pluginami)
+7. [Dodawanie nowego skilla](#7-dodawanie-nowego-skilla)
+8. [Dodawanie nowego pluginu](#8-dodawanie-nowego-pluginu)
+9. [Wersjonowanie](#9-wersjonowanie)
+10. [Włączanie pluginów dla konkretnego projektu](#10-włączanie-pluginów-dla-konkretnego-projektu)
+11. [Rozwiązywanie problemów](#11-rozwiązywanie-problemów)
+12. [Ściągawka komend](#12-ściągawka-komend)
 
 ---
 
@@ -40,6 +39,8 @@ skills/
         ├── .claude-plugin/
         │   └── plugin.json
         └── skills/
+            ├── analyzing-confluence-feasibility/
+            │   └── SKILL.md
             ├── planning-jira-implementation/
             │   └── SKILL.md
             └── reviewing-java-commits/
@@ -61,6 +62,7 @@ Aktualne pluginy:
 | `claude-setup` | `/claude-setup:context-statusline` | Konfiguruje `ccstatusline`, żeby status line pokazywał zużycie kontekstu |
 | `java-backend` | `/java-backend:planning-jira-implementation` | Tworzy plan implementacji backendu z zadania Jira i powiązanej analizy systemowej w Confluence → `IMPLEMENTATION_PLAN/IMPLEMENTATION_PLAN_<KLUCZ>.md`. Wymaga dostępu do Jiry i Confluence (dowolny serwer MCP, CLI albo REST API z tokenem). Zapisuje też lokalną kopię analizy w `IMPLEMENTATION_PLAN/.analiza/` i zadaje pytania z cytatem oraz odnośnikiem do konkretnego fragmentu. |
 | | `/java-backend:reviewing-java-commits` | Code review pull requesta Java z Bitbucketa (standardy projektu + jakość kodu + zgodność z analizą systemową z Confluence), raport po polsku → `CODE_REVIEW/<gałąź>.md`. Przyjmuje dwa linki: pull request i analizę; bez linku do analizy przegląd nadal się wykonuje, ale raport to odnotowuje. |
+| | `/java-backend:analyzing-confluence-feasibility` | Analiza wykonalności rozwiązania opisanego na stronie Confluence — zgodność z modelem bazy danych, spójność kontraktu backend–frontend, wykonalność logiki biznesowej. Raport po polsku, dokładnie trzy sekcje → `ANALIZA_WYKONALNOSCI/<tytuł-strony>.md`. Nie tworzy planu implementacji. |
 
 ---
 
@@ -68,56 +70,10 @@ Aktualne pluginy:
 
 - **Claude Code** — w miarę aktualna wersja (sprawdź: `claude --version`, aktualizacja: `claude update`).
 - **Git** w `PATH` (Claude Code klonuje repo gitem).
-- **Dostęp do repo `ChmielewskiPatryk/skills`** z danej maszyny — patrz niżej.
 
 ---
 
-## 3. Dostęp do prywatnego repo (jednorazowo na maszynę)
-
-Skrót `ChmielewskiPatryk/skills` Claude Code domyślnie klonuje **przez SSH**. To zalecana metoda, bo działa też przy automatycznych aktualizacjach w tle.
-
-### Opcja A: SSH (zalecane)
-
-1. Sprawdź, czy masz już dostęp:
-
-   ```bash
-   ssh -T git@github.com
-   ```
-
-   Jeśli widzisz `Hi ChmielewskiPatryk! You've successfully authenticated...` — gotowe, przejdź do [kroku 4](#4-instalacja-skilli).
-
-2. Jeśli nie — wygeneruj klucz:
-
-   ```bash
-   ssh-keygen -t ed25519 -C "twoj@email"
-   ```
-
-3. Skopiuj klucz publiczny (`~/.ssh/id_ed25519.pub`, na Windows `C:\Users\<user>\.ssh\id_ed25519.pub`) i dodaj go na GitHubie: **Settings → SSH and GPG keys → New SSH key**.
-
-4. Powtórz `ssh -T git@github.com`.
-
-> **Klucz z hasłem?** Automatyczne aktualizacje w tle nie mogą zapytać o hasło. Dodaj klucz do `ssh-agent` (`ssh-add ~/.ssh/id_ed25519`). Na Windows najpierw włącz usługę (PowerShell jako administrator):
-> `Get-Service ssh-agent | Set-Service -StartupType Automatic; Start-Service ssh-agent`
-
-### Opcja B: HTTPS + GitHub CLI
-
-Jeśli nie chcesz używać SSH:
-
-```bash
-gh auth login          # zaloguj się do GitHuba
-gh auth setup-git      # git będzie używał tokenu z gh
-```
-
-Potem ustaw zmienną środowiskową, żeby Claude Code używał HTTPS zamiast SSH:
-
-- bash/zsh: `export CLAUDE_CODE_PLUGIN_PREFER_HTTPS=1` (dodaj do `~/.bashrc` / `~/.zshrc`)
-- PowerShell (na stałe): `[Environment]::SetEnvironmentVariable("CLAUDE_CODE_PLUGIN_PREFER_HTTPS", "1", "User")`
-
-Po ustawieniu zmiennej uruchom terminal i Claude Code od nowa.
-
----
-
-## 4. Instalacja skilli
+## 3. Instalacja skilli
 
 ### Krok 1: dodaj marketplace (raz na maszynę)
 
@@ -182,7 +138,7 @@ Wpisz `/claude-setup:` — autouzupełnianie powinno pokazać skille z pluginu.
 
 ---
 
-## 5. Używanie skilli
+## 4. Używanie skilli
 
 Skille z pluginów mają przedrostek nazwy pluginu:
 
@@ -196,7 +152,7 @@ Skille **bez** `disable-model-invocation: true` w nagłówku Claude może też u
 
 ---
 
-## 6. Aktualizacje
+## 5. Aktualizacje
 
 Po wypchnięciu zmian do repo (`git push`) trzeba je pobrać na maszynach, gdzie plugin jest zainstalowany.
 
@@ -218,7 +174,7 @@ claude plugin update claude-setup@chmielewski-skills
 
 ### Automatycznie (zalecane)
 
-Dla prywatnych marketplace'ów auto-update jest **domyślnie wyłączony**. Włącz go raz na maszynę:
+Auto-update jest **domyślnie wyłączony**. Włącz go raz na maszynę:
 
 1. `/plugin`
 2. Zakładka **Marketplaces**
@@ -227,11 +183,9 @@ Dla prywatnych marketplace'ów auto-update jest **domyślnie wyłączony**. Wł�
 
 Claude Code sprawdza aktualizacje w tle po starcie sesji (z losowym opóźnieniem do ~10 min). Gdy coś się zaktualizuje, zobaczysz prośbę o `/reload-plugins` — albo nowa wersja załaduje się przy następnym uruchomieniu.
 
-> Aktualizacje w tle wymagają dostępu **bez interakcji**: SSH z kluczem w `ssh-agent` albo `gh auth setup-git` (patrz [krok 3](#3-dostęp-do-prywatnego-repo-jednorazowo-na-maszynę)).
-
 ---
 
-## 7. Zarządzanie pluginami
+## 6. Zarządzanie pluginami
 
 Najprościej: `/plugin` → zakładka **Installed** → Enter na pluginie → enable / disable / uninstall.
 
@@ -252,7 +206,7 @@ Te same operacje z terminala: `claude plugin list | enable | disable | uninstall
 
 ---
 
-## 8. Dodawanie nowego skilla
+## 7. Dodawanie nowego skilla
 
 Przykład: skill `commit-message` w istniejącym pluginie `claude-setup`.
 
@@ -319,11 +273,11 @@ git push
 
 ### 4. Pobierz na maszynach
 
-Patrz [Aktualizacje](#6-aktualizacje). Nowy skill w już zainstalowanym pluginie pojawi się po aktualizacji — nie trzeba nic doinstalowywać.
+Patrz [Aktualizacje](#5-aktualizacje). Nowy skill w już zainstalowanym pluginie pojawi się po aktualizacji — nie trzeba nic doinstalowywać.
 
 ---
 
-## 9. Dodawanie nowego pluginu
+## 8. Dodawanie nowego pluginu
 
 Nowy plugin warto zrobić, gdy skille tworzą osobną grupę, którą chcesz instalować / wyłączać niezależnie (np. `frontend`, `git-tools`).
 
@@ -394,7 +348,7 @@ Na maszynie docelowej:
 
 ---
 
-## 10. Wersjonowanie
+## 9. Wersjonowanie
 
 Claude Code ustala wersję pluginu w tej kolejności:
 
@@ -402,7 +356,7 @@ Claude Code ustala wersję pluginu w tej kolejności:
 2. `version` we wpisie w `marketplace.json`
 3. **SHA commita** (jeśli nie ma żadnego pola `version`)
 
-**Obecnie pluginy nie mają pola `version`** — więc każdy commit to nowa wersja i aktualizacje przychodzą same po `git push`. Przy prywatnym repo to najwygodniejsze.
+**Obecnie pluginy nie mają pola `version`** — więc każdy commit to nowa wersja i aktualizacje przychodzą same po `git push`. To najwygodniejsze rozwiązanie.
 
 Dlatego `claude plugin validate` pokazuje ostrzeżenie `No version specified` — to celowe i można je zignorować (nie używaj `--strict`, bo zamieni je w błąd).
 
@@ -413,7 +367,7 @@ Jeśli kiedyś dodasz `"version": "1.0.0"` do `plugin.json`:
 
 ---
 
-## 11. Włączanie pluginów dla konkretnego projektu
+## 10. Włączanie pluginów dla konkretnego projektu
 
 Żeby projekt sam proponował ten marketplace i pluginy (np. po sklonowaniu na nowej maszynie), dodaj do `.claude/settings.json` **w tamtym projekcie**:
 
@@ -439,30 +393,26 @@ Po zaufaniu folderowi projektu Claude Code doda marketplace automatycznie. Jeśl
 claude plugin install claude-setup@chmielewski-skills --scope project
 ```
 
-Dostęp do prywatnego repo nadal jest wymagany na każdej maszynie ([krok 3](#3-dostęp-do-prywatnego-repo-jednorazowo-na-maszynę)).
-
 ---
 
-## 12. Rozwiązywanie problemów
+## 11. Rozwiązywanie problemów
 
 | Problem | Rozwiązanie |
 | --- | --- |
-| `Permission denied (publickey)` / `Repository not found` przy dodawaniu marketplace | Brak dostępu do prywatnego repo. Sprawdź `ssh -T git@github.com` ([krok 3](#3-dostęp-do-prywatnego-repo-jednorazowo-na-maszynę)). Przy HTTPS: `gh auth status`, `gh auth setup-git` i `CLAUDE_CODE_PLUGIN_PREFER_HTTPS=1`. |
-| Ręczna aktualizacja działa, automatyczna nie | Aktualizacje w tle nie mogą pytać o hasło. Dodaj klucz do `ssh-agent` albo użyj `gh auth setup-git`. Sprawdź, czy auto-update jest włączony ([krok 6](#6-aktualizacje)). |
+| Ręczna aktualizacja działa, automatyczna nie | Sprawdź, czy auto-update jest włączony ([krok 5](#5-aktualizacje)). |
 | Plugin się nie ładuje | `claude plugin validate .` i `claude plugin validate ./plugins/<plugin>` — pokażą błędy JSON / ścieżek. Szczegóły w `/plugin` → zakładka **Errors**. |
 | Skill nie pojawia się po aktualizacji | `/plugin marketplace update chmielewski-skills`, potem `/reload-plugins`. Sprawdź, czy `SKILL.md` ma nagłówek `---` w 1. linii i pole `name`. |
 | Nadal nie widać zmian | Wyczyść cache i zainstaluj ponownie: usuń `~/.claude/plugins/cache` (Windows: `%USERPROFILE%\.claude\plugins\cache`), zrestartuj Claude Code, zainstaluj plugin od nowa. |
-| Zmiany nie przychodzą mimo pusha | Jeśli dodałeś `version` w `plugin.json` — podbij ją ([krok 10](#10-wersjonowanie)). |
+| Zmiany nie przychodzą mimo pusha | Jeśli dodałeś `version` w `plugin.json` — podbij ją ([krok 9](#9-wersjonowanie)). |
 | `/plugin` nie istnieje | Zaktualizuj Claude Code (`claude update`) i uruchom ponownie. |
 | Potrzebujesz szczegółowych logów | `claude --debug` (albo `claude --debug --plugin-dir ./plugins/<plugin>` przy testach lokalnych). |
 
 ---
 
-## 13. Ściągawka komend
+## 12. Ściągawka komend
 
 ```bash
 # --- Nowa maszyna ---
-ssh -T git@github.com                                         # sprawdź dostęp
 claude plugin marketplace add ChmielewskiPatryk/skills        # dodaj marketplace
 claude plugin install claude-setup@chmielewski-skills         # zainstaluj plugin
 
@@ -481,6 +431,7 @@ claude --plugin-dir ./plugins/claude-setup                    # testuj lokalnie
 /claude-setup:context-statusline                              # użyj skilla
 /java-backend:planning-jira-implementation PROJ-123           # plan implementacji z Jiry
 /java-backend:reviewing-java-commits <link-PR> <link-analizy>  # code review pull requesta
+/java-backend:analyzing-confluence-feasibility <link-strony>  # analiza wykonalności
 ```
 
 Dokumentacja:
