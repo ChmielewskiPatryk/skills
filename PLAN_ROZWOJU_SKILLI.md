@@ -70,13 +70,12 @@ Plan modyfikacji i nowych skilli w pluginie `java-backend`, na podstawie notatki
 
 Kroki:
 
-1. **Ustalenie zakresu.** Skill sprawdza, które projekty zostały zmodyfikowane w ramach zadania (gałąź z kluczem zadania, diff względem gałęzi bazowej w każdym repozytorium, opcjonalnie lista repozytoriów z `IMPLEMENTATION_PLAN_<KLUCZ>.md`). Do uruchomienia trafiają tylko te projekty, które da się uruchomić jako usługę. Zmienione biblioteki, np. kontrakt API, nie są uruchamiane, ale ich nowa wersja musi być widoczna dla usług.
-2. **Reset baz** dla uruchamianych usług. Wymaga potwierdzenia przy pierwszym uruchomieniu w sesji.
-3. **Uruchomienie usług** i czekanie na health-check każdej z nich.
-4. **`bru run`** dla kolekcji lub folderu nowych albo zmienionych endpointów.
-5. **Raport** z odpowiedziami oraz **zatrzymanie usług**.
-
-Ten skill najbardziej zależy od środowiska, dlatego jest ostatni (patrz pytania niżej).
+1. **Ustalenie zakresu.** Skill sprawdza, które projekty zostały zmodyfikowane w ramach zadania (gałąź z kluczem zadania, diff względem gałęzi bazowej w każdym repozytorium, opcjonalnie lista repozytoriów z `IMPLEMENTATION_PLAN_<KLUCZ>.md`). Sam rozpoznaje usługi (aplikacje Java z kodem wykonywalnym) i biblioteki (projekty Gradle bez kodu wykonywalnego, np. kontrakt API).
+2. **Biblioteki:** zmienione są publikowane przez `./gradlew publishToMavenLocal`.
+3. **Baza danych** w Dockerze, zwykle z docker compose w `crypto-async-api` (potwierdzenie przy pierwszym uruchomieniu). Reset to zawsze `down -v` i postawienie od zera, za zgodą.
+4. **Uruchomienie usług** przez Gradle (`bootRun`) po bazie i czekanie na gotowość (actuator, jeśli jest, w przeciwnym razie log i port).
+5. **Żądania:** bez Bruno. Skill sam wyznacza nowe, zmienione i pośrednio dotknięte endpointy, buduje żądania z kontraktu i DTO, przypadki negatywne z macierzy wymagań i wysyła je `curl`-em. Autoryzacja poza zakresem.
+6. **Raport**, skrypt żądań do ponownego uruchomienia oraz **zatrzymanie usług**.
 
 ### F. Nowy skill `running-task-retro` (punkt 9)
 
@@ -92,14 +91,8 @@ Ten skill najbardziej zależy od środowiska, dlatego jest ostatni (patrz pytani
 - Każdy nowy skill w tym samym stylu co obecne: sekcja dostępu (MCP, CLI, REST), tabela „Kiedy zapytać”, „Częste błędy”, raport po polsku bez skrótowców.
 - Na koniec `claude plugin validate`.
 
-## Otwarte pytania przed implementacją
-
-**Do punktu 5 (smoke test, może poczekać do fazy 3):**
-
-1. Jak uruchamiasz poszczególne usługi (`bootRun`, docker compose) i jak rozpoznać, które repozytorium jest usługą, a które biblioteką? Jak resetujesz bazy? Gdzie leży kolekcja Bruno?
-
 ## Kolejność realizacji
 
 1. Faza 1, punkt A (macierz testów): nie wymaga odpowiedzi na pytania.
 2. Faza 2: B, C, D.
-3. Faza 3: E (po odpowiedzi na pytanie 1), F.
+3. Faza 3: E, F.

@@ -31,7 +31,7 @@ Zbierz wszystko, co istnieje — brak pojedynczego źródła nie blokuje retrosp
 | Finalny kod | gałąź zadania w każdym repozytorium (albo commit scalenia, jeżeli pull request jest już scalony) | Diff względem punktu rozejścia z gałęzią bazową |
 | Raporty code review | `CODE_REVIEW/<gałąź>.md` w każdym repozytorium | Uwagi, ich kategorie (checklisty A, B, C), sekcja „Weryfikacja poprzednich uwag”, pokrycie macierzy testami |
 | Komentarze w pull requestach | Bitbucket (MCP, REST albo CLI — jak w skillu review) | Uwagi recenzentów-ludzi, których nie było w raportach |
-| Smoke test | `SMOKE_TEST/<KLUCZ>.md` | Błędy, brak pokrycia w Bruno, repozytoria „zaplanowane, ale niezmienione” |
+| Smoke test | `SMOKE_TEST/<KLUCZ>.md` | Niezgodności żądań, pozycje „do oceny przez programistę”, repozytoria „zaplanowane, ale niezmienione” |
 | Zadanie Jira i strona Confluence | MCP, REST albo CLI | Komentarze dodane po zapisaniu planu (zmiany wymagań w trakcie) |
 | Bieżące skille | `${CLAUDE_SKILL_DIR}/../<skill>/SKILL.md` | Aktualna treść skilli, do której odnoszą się propozycje zmian |
 
@@ -54,7 +54,7 @@ Dostęp do Jiry, Confluence i Bitbucketa ustalaj tak samo jak w pozostałych ski
    - uwaga z checklisty B (jakość, bezpieczeństwo) → czy to błąd implementacji, czy luka w planie (na przykład brak kroku autoryzacji);
    - uwaga, która wróciła jako „nienaprawiona” albo „naprawiona częściowo” w trybie przyrostowym → osobno, bo to koszt kolejnej rundy.
 6. **Pytania.** Zestaw wszystkie pytania: z raportu wykonalności, „Rozstrzygnięte pytania” i „Otwarte pytania do analityka” z planu, pytania z review („Pytania i luki w analizie”). Ustal dla każdego: kiedy zostało zadane (wykonalność, planowanie, implementacja, review), czy mogło zostać zadane wcześniej (na przykład pytanie zadane dopiero w review, a sformułowanie analizy było niejasne już w momencie planowania), czy dostało odpowiedź i od kogo.
-7. **Smoke test.** Jeżeli raport istnieje, wypisz błędy, endpointy bez pokrycia w Bruno i repozytoria „zaplanowane, ale niezmienione”, i powiąż je z krokami planu.
+7. **Smoke test.** Jeżeli raport istnieje, wypisz niezgodności żądań, endpointy pominięte albo bez oczekiwanego wyniku i repozytoria „zaplanowane, ale niezmienione”, i powiąż je z krokami planu.
 8. **Wnioski.** Z ustaleń z kroków 3–7 wybierz te, które mają wspólną przyczynę leżącą w procesie, a nie w jednorazowym błędzie. Dla każdego wniosku wskaż etap i skill, który powinien był to wychwycić. Jednorazowe pomyłki implementacyjne wypisz, ale nie twórz z nich propozycji zmian w skillach.
 9. **Propozycje zmian w skillach.** Dla każdego wniosku z kroku 8, który da się przełożyć na instrukcję, przeczytaj aktualną treść odpowiedniego skilla (`${CLAUDE_SKILL_DIR}/../<skill>/SKILL.md`) i przygotuj konkretną zmianę: nowy punkt w „Częstych błędach”, nowy wiersz w tabeli „Kiedy zapytać”, nowa pozycja checklisty, doprecyzowanie kroku procesu. Zmiana ma być w stylu i języku zmienianej sekcji, minimalna i uzasadniona przypadkiem z tego zadania. Zapisz wszystkie zmiany jako jeden plik w formacie unified diff, ze ścieżkami względnymi od katalogu głównego repozytorium skilli (`plugins/java-backend/skills/<skill>/SKILL.md`), żeby dało się go nałożyć przez `git apply` w tym repozytorium. Sprawdź, czy kontekst każdego hunka dokładnie odpowiada aktualnej treści pliku.
 10. **Zapisz raport** `RETRO/<KLUCZ>.md` i łatkę `RETRO/<KLUCZ>-skille.patch` w katalogu głównym repozytorium wiodącego (tam, gdzie leży plan; jeżeli planu nie ma — w bieżącym repozytorium). Dopisz `RETRO/` do `.gitignore`, jeżeli go tam nie ma.
@@ -124,7 +124,7 @@ Repozytoria: <nazwa (gałąź, zakres commitów)>, ...
 
 ## Smoke test
 
-<błędy, brak pokrycia w Bruno, repozytoria zaplanowane, ale niezmienione — albo „brak raportu”>
+<niezgodności, endpointy pominięte lub bez oczekiwania, repozytoria zaplanowane, ale niezmienione — albo „brak raportu”>
 
 ## Wnioski
 
