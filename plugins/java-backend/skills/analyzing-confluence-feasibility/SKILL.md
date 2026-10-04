@@ -1,6 +1,6 @@
 ---
 name: analyzing-confluence-feasibility
-description: Use when asked to analyze whether a solution described on a Confluence page (system analysis, specification, design document) is feasible — "analiza wykonalności", "czy da się to zrobić", "sprawdź tę analizę". Produces a feasibility analysis, NOT an implementation plan: it checks the description against the database model (from the document, or from source code when the document does not describe it — then it asks which repository to use), checks the internal consistency of the backend-to-frontend contract described in the document, and checks whether the described business logic can actually be carried out. Polish-language Markdown report with exactly three sections.
+description: Use when asked to analyze whether a solution described on a Confluence page (system analysis, specification, design document) is feasible — "analiza wykonalności", "czy da się to zrobić", "sprawdź tę analizę". Produces a feasibility analysis, NOT an implementation plan: it checks the description against the database model (from the document, or from source code when the document does not describe it — then it asks which repository to use), checks the internal consistency of the backend-to-frontend contract described in the document, and checks whether the described business logic can actually be carried out. Polish-language Markdown report with exactly three analysis sections plus a final section with a copy-ready comment of questions for the analyst (blockers and missing information only).
 disable-model-invocation: false
 ---
 
@@ -14,7 +14,7 @@ Bierze jedną stronę Confluence opisującą rozwiązanie i odpowiada na pytanie
 2. Czy kontrakt między backendem a frontendem opisany w dokumencie jest spójny i kompletny?
 3. Czy opisana logika biznesowa daje się wykonać?
 
-Wynik to jeden plik Markdown w języku polskim, napisany zwykłym językiem, bez skrótowców.
+Wynik to jeden plik Markdown w języku polskim, napisany zwykłym językiem, bez skrótowców. Plik ma trzy sekcje analizy i czwartą, ostatnią sekcję „Pytania do analityka” — gotowy do skopiowania komentarz z pytaniami wynikającymi z tych trzech sekcji. Pytania nie trafiają do osobnego pliku.
 
 ## When to Use
 
@@ -56,8 +56,23 @@ Kroki poniżej opisują, **jakie dane** pobrać. Konkretną nazwę narzędzia lu
    - **Ryzyko** — da się wykonać, ale przy pewnym założeniu, które może okazać się błędne, albo kosztem czegoś, o czym dokument nie mówi.
    - **Do uzupełnienia** — brak informacji, który nie zatrzymuje prac, ale zostanie zadany jako pytanie w trakcie pracy, jeżeli nie zostanie wyjaśniony wcześniej.
 9. **Wskaż miejsce każdego ustalenia.** Każde ustalenie musi wskazywać miejsce w dokumencie (nazwa sekcji, nagłówek, tabela, akapit), którego dotyczy — czytelnik ma je znaleźć bez zgadywania. Jeżeli ustalenie pochodzi z porównania z kodem, podaj też ścieżkę pliku, klasę albo nazwę tabeli.
-10. **Zapisz raport** według szablonu z sekcji „Output".
-11. **Odpowiedz w czacie:** ścieżka do zapisanego pliku, liczba blokad, ryzyk i braków do uzupełnienia, oraz jedno zdanie o najpoważniejszym ustaleniu.
+10. **Zbierz pytania do analityka.** Z trzech sekcji analizy wybierz wszystkie ustalenia o wadze „blokada” i „do uzupełnienia” i zamień każde na jedno pytanie w formacie z sekcji „Format pytań do analityka”. Ryzyka nie trafiają do pytań — to założenia zespołu, nie braki w dokumencie. Wyjątek: ryzyko, którego założenie może potwierdzić albo obalić tylko analityk, zamień na pytanie o to założenie. Każde pytanie musi odpowiadać ustaleniu z jednej z trzech sekcji — nie dopisuj pytań, których nie ma w analizie.
+11. **Zapisz raport** według szablonu z sekcji „Output".
+12. **Odpowiedz w czacie:** ścieżka do zapisanego pliku, liczba blokad, ryzyk i braków do uzupełnienia, liczba pytań do analityka oraz jedno zdanie o najpoważniejszym ustaleniu.
+13. **Publikacja pytań (opcjonalnie).** Jeżeli użytkownik o to poprosi, możesz dodać treść bloku z pytaniami jako komentarz pod stroną Confluence albo w zadaniu Jira. To wychodzi na zewnątrz, więc przed wysłaniem pokaż, gdzie komentarz trafi i jaka jest jego treść, i poczekaj na wyraźną zgodę. Bez prośby użytkownika niczego nie publikuj.
+
+## Format pytań do analityka
+
+Pytania są pisane do analityka, nie do programisty: bez nazw klas, ścieżek plików i odwołań do kodu. Jeżeli ustalenie pochodzi z porównania z kodem, opisz je językiem modelu danych („w systemie kwota jest przechowywana jako jedna wartość, bez rozbicia na netto i brutto”), a nie nazwą encji.
+
+Każde pytanie ma cztery elementy:
+
+- **Cytat** — dosłowny fragment dokumentu (jedno do trzech zdań), którego dotyczy pytanie.
+- **Miejsce** — nazwa sekcji, nagłówek albo tabela oraz link do anchora na stronie (`<link-strony>#<Nazwa-Sekcji>`), jeżeli da się go zbudować. Dla komentarza podaj autora i datę.
+- **Pytanie** — jedno zdanie, na które da się odpowiedzieć krótko.
+- **Hipoteza** — najbardziej prawdopodobna odpowiedź, sformułowana tak, żeby analityk mógł ją potwierdzić jednym słowem. Jeżeli sensownych odpowiedzi jest kilka, wypisz je jako warianty do wyboru.
+
+Pytania numeruj ciągle (1, 2, 3 i dalej), najpierw blokady, potem pozycje do uzupełnienia. Pod blokiem podaj, z którego ustalenia raportu pochodzi każde pytanie, żeby zespół mógł wrócić do pełnego opisu.
 
 ## Kiedy zapytać, a kiedy nie
 
@@ -70,6 +85,7 @@ Kroki poniżej opisują, **jakie dane** pobrać. Konkretną nazwę narzędzia lu
 | Znaleziono sprzeczność wewnątrz dokumentu, której nie rozstrzyga żaden komentarz | Nie pytaj w trakcie pracy — to jest właśnie wynik analizy. Opisz obie wersje i oznacz jako blokadę albo ryzyko. |
 | Komentarz pod stroną koryguje treść dokumentu | Nie pytaj — zastosuj poprawkę z komentarza i zaznacz w raporcie, że pochodzi ona z komentarza, a nie z głównej treści. |
 | Użytkownik prosi jednocześnie o analizę wykonalności i o plan implementacji | Zapytaj, czego potrzebuje teraz. Ten skill nie tworzy planów implementacji. |
+| Użytkownik prosi o opublikowanie pytań w Confluence albo w Jirze | Pokaż miejsce docelowe i treść komentarza, zapytaj o zgodę. Publikuj dopiero po wyraźnym potwierdzeniu. |
 
 ## Output
 
@@ -79,7 +95,7 @@ Kroki poniżej opisują, **jakie dane** pobrać. Konkretną nazwę narzędzia lu
 
 **Lokalizacja pliku:** `ANALIZA_WYKONALNOSCI/<tytuł-strony>.md` w katalogu głównym repozytorium, w którym pracujesz (utwórz folder `ANALIZA_WYKONALNOSCI`, jeżeli nie istnieje). Tytuł strony zamień na bezpieczną nazwę pliku: spacje i ukośniki na myślniki, bez polskich znaków diakrytycznych. Jeżeli dokument dotyczy konkretnego zadania i jego klucz jest znany, użyj klucza zadania zamiast tytułu, na przykład `ANALIZA_WYKONALNOSCI/PROJ-777.md`. Jeżeli nie pracujesz w żadnym repozytorium, zapytaj użytkownika, gdzie zapisać plik. Ponowna analiza tej samej strony nadpisuje poprzedni plik — data analizy i wersja strony są w nagłówku raportu.
 
-**Szablon** (raport ma dokładnie te trzy sekcje — nie dodawaj podsumowania, wniosków, rekomendacji ani kolejnych kroków jako osobnych sekcji; wszystko, co masz do powiedzenia, mieści się wewnątrz tych trzech obszarów):
+**Szablon** (raport ma dokładnie trzy sekcje analizy i sekcję „Pytania do analityka” na końcu — nie dodawaj podsumowania, wniosków, rekomendacji ani kolejnych kroków jako osobnych sekcji; wszystko, co masz do powiedzenia, mieści się wewnątrz tych czterech sekcji):
 
 ````markdown
 # Analiza wykonalności – <tytuł strony Confluence>
@@ -134,12 +150,41 @@ Jeżeli dokument w ogóle nie opisuje kontraktu, napisz to wprost i wypisz, jaki
 (kolejne ustalenia w tym samym formacie, ponumerowane, od najpoważniejszego)
 
 Jeżeli opisana logika jest spójna i wykonalna, napisz to wprost i wypisz, które reguły oraz które przypadki brzegowe sprawdzono.
+
+## Pytania do analityka
+
+Poniższy blok to gotowy komentarz do wklejenia pod stroną Confluence albo w zadaniu Jira. Zawiera <N> pytań: <liczba> blokad i <liczba> pozycji do uzupełnienia.
+
+```text
+Dzień dobry, po analizie wykonalności strony "<tytuł strony Confluence>" (wersja <numer>) mamy <N> pytań. Pytania 1–<K> blokują rozpoczęcie prac.
+
+1. [Blokada] <krótki tytuł>
+   Cytat: "<dosłowny fragment dokumentu>"
+   Miejsce: <nazwa sekcji albo tabeli> – <link-strony>#<Nazwa-Sekcji>
+   Pytanie: <jedno zdanie>
+   Proponujemy: <hipoteza; przy kilku możliwościach: (a) ..., (b) ...>
+
+2. [Do uzupełnienia] <krótki tytuł>
+   Cytat: "<dosłowny fragment dokumentu>"
+   Miejsce: <nazwa sekcji albo tabeli> – <link-strony>#<Nazwa-Sekcji>
+   Pytanie: <jedno zdanie>
+   Proponujemy: <hipoteza>
+```
+
+Pochodzenie pytań: 1 – ustalenie <numer> w sekcji „<nazwa sekcji raportu>”; 2 – ustalenie <numer> w sekcji „<nazwa sekcji raportu>”.
+
+Jeżeli w raporcie nie ma żadnej blokady ani pozycji do uzupełnienia, napisz w tej sekcji jedno zdanie: „Brak pytań do analityka — analiza nie wykazała blokad ani braków informacji.” i nie wstawiaj bloku.
 ````
 
 ## Częste błędy
 
 - Napisanie planu implementacji zamiast analizy wykonalności — kroki, kolejność prac, podział na repozytoria i szacowanie czasu nie należą do tego raportu.
-- Dodanie do raportu sekcji spoza trzech wymienionych w szablonie, na przykład „Podsumowanie", „Rekomendacje" albo „Kolejne kroki". Raport ma dokładnie trzy sekcje.
+- Dodanie do raportu sekcji spoza czterech wymienionych w szablonie, na przykład „Podsumowanie", „Rekomendacje" albo „Kolejne kroki". Raport ma trzy sekcje analizy i sekcję „Pytania do analityka”.
+- Zapisanie pytań do analityka w osobnym pliku albo rozbicie ich na kilka bloków kodu. Wszystkie pytania są w jednym bloku w ostatniej sekcji raportu, żeby dało się je skopiować jednym kliknięciem.
+- Pytanie bez cytatu albo bez miejsca w dokumencie — analityk musi wtedy sam szukać, o który fragment chodzi.
+- Pytanie, któremu nie odpowiada żadne ustalenie z trzech sekcji analizy. Sekcja pytań jest wyciągiem z raportu, nie miejscem na nowe wątpliwości.
+- Nazwy klas, ścieżki plików albo nazwy tabel z kodu w treści pytań — analityk nie zna kodu, więc problem opisuje się językiem dokumentu.
+- Opublikowanie komentarza z pytaniami w Confluence albo w Jirze bez wyraźnej zgody użytkownika.
 - Proszenie o repozytorium, mimo że dokument opisuje model bazy danych — kod sprawdza się tylko wtedy, gdy opisu modelu w dokumencie nie ma.
 - Zaglądanie do kodu przy sprawdzaniu kontraktu między backendem a frontendem — ta sekcja opiera się wyłącznie na dokumencie.
 - Zgadywanie struktury bazy danych, gdy nie ma ani opisu w dokumencie, ani wskazanego repozytorium, zamiast napisania wprost, że tego obszaru nie dało się zweryfikować.

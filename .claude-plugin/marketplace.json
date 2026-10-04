@@ -13,7 +13,7 @@
     {
       "name": "java-backend",
       "source": "./plugins/java-backend",
-      "description": "Skille do pracy nad backendem Java (planowanie zadań z Jiry, code review commitów, analiza wykonalności stron Confluence)"
+      "description": "Skille do pracy nad backendem Java (analiza wykonalności stron Confluence, planowanie zadań z Jiry z macierzą wymagań i testów, code review pull requestów, lokalny smoke test, retrospektywa zadania)"
     }
   ]
 }

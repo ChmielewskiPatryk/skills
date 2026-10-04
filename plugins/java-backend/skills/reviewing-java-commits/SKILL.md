@@ -1,6 +1,6 @@
 ---
 name: reviewing-java-commits
-description: Use when asked to review a Java pull request from Bitbucket against the system-analysis document in Confluence — a full code review of the pull request covering correctness, security, performance, maintainability, compliance with this project's own coding standards (package-by-feature, jOOQ for reads, JPA/Hibernate for writes, MapStruct mapping, no needless interfaces, Liquibase changeset conventions) and compliance with the linked analysis. Takes two links (Bitbucket pull request, Confluence analysis). Static analysis only; produces a Polish-language Markdown report with class and line references, not inline pull-request comments.
+description: Use when asked to review a Java pull request from Bitbucket against the system-analysis document in Confluence — a full code review of the pull request covering correctness, security and authorization, performance, maintainability, compliance with this project's own coding standards (package-by-feature, jOOQ for reads, JPA/Hibernate for writes, MapStruct mapping, no needless interfaces, Liquibase changeset conventions) and compliance with the linked analysis, including whether every row of the implementation plan's requirements-to-tests matrix has a test that actually verifies the rule. Takes two links (Bitbucket pull request, Confluence analysis). When a previous report for the branch exists and the branch has new commits, runs incrementally: reviews only the new commits and verifies whether earlier findings were fixed. Static analysis only, read-only; produces a Polish-language Markdown report with class and line references, not inline pull-request comments.
 disable-model-invocation: false
 ---
 
@@ -64,6 +64,8 @@ Metadane pull requesta (gałąź docelowa, tytuł, opis, komentarze) weź z Bitb
 1. **Ustal oba linki** według sekcji "Wejście: dwa linki". Dopiero potem rób cokolwiek dalej.
 2. **Rozwiąż pull request.** Pobierz z Bitbucketa: numer pull requesta, tytuł, opis, gałąź źródłową, gałąź docelową, listę zmienionych plików oraz komentarze do pull requesta. Komentarz recenzenta może już opisywać problem — jeśli problem nadal jest w kodzie, zgłoś go i zaznacz, że był już podnoszony. Potwierdź, że lokalne repozytorium odpowiada temu pull requestowi, i pobierz aktualne gałęzie przez `git -C <repo> fetch`.
 3. **Wyznacz zakres zmian.** `git -C <repo> merge-base <gałąź-docelowa> <gałąź-źródłowa>`, a następnie `git -C <repo> diff --name-status <merge-base> <gałąź-źródłowa>`. To, i tylko to, jest przedmiotem przeglądu. Nie przeglądaj zmian, które weszły do gałęzi docelowej niezależnie od tego pull requesta.
+   - **Sprawdź, czy to przegląd przyrostowy.** Jeżeli istnieje już raport `CODE_REVIEW/<nazwa-gałęzi-źródłowej>.md`, odczytaj z niego ostatni przeglądany commit i postępuj według sekcji „Tryb przyrostowy”, zanim przejdziesz dalej.
+   - **Znajdź plan implementacji.** Ustal klucz zadania z nazwy gałęzi źródłowej (na przykład `feature/PROJ-123-opis` → `PROJ-123`) i poszukaj pliku `IMPLEMENTATION_PLAN/IMPLEMENTATION_PLAN_<KLUCZ>.md` w katalogu głównym repozytorium. Jeżeli go tam nie ma, a pracujesz w katalogu z kilkoma repozytoriami obok siebie, sprawdź też ten sam folder w repozytoriach sąsiednich — plan zapisuje się w repozytorium wiodącym. Jeżeli plan istnieje i ma sekcję „Macierz wymagań i testów”, zastosuj pozycję 18 checklisty C. Jeżeli planu nie ma, nie pytaj o niego i nie blokuj przeglądu — zaznacz w raporcie, że pokrycia macierzy nie sprawdzono.
 4. **Pobierz analizę systemową** z Confluence: treść strony oraz komentarze do niej, zwykłe (footer) i inline. Jeśli dostępne narzędzie nie udostępnia komentarzy inline, zaznacz w raporcie, że nie zostały sprawdzone. Nowszy komentarz korygujący treść analizy ma pierwszeństwo przed nieaktualnym fragmentem głównego dokumentu — jeśli korzystasz z takiej poprawki, napisz w uwadze, że pochodzi ona z komentarza, a nie z głównej treści.
 5. **Wypisz wymagania z analizy.** Zanim przejdziesz do kodu, sporządź dla siebie listę konkretnych, weryfikowalnych wymagań z analizy, których ten pull request dotyczy: nazwy pól i tabel, reguły walidacji, warunki brzegowe, kształt kontraktu (endpointy, nazwy i typy pól), zachowanie w sytuacjach błędnych, wartości domyślne. Tylko takie wymagania można potem rzetelnie skonfrontować z kodem.
 6. **Przejrzyj każdy zmieniony plik**, nie tylko pliki `.java`. Pull request rutynowo zawiera także skrypty migracyjne SQL, konfigurację generowania kodu jOOQ, konfigurację mapowania i podobne pliki, które wprost dotyczą tych standardów — nie odfiltrowuj ich. Decyduj o istotności osobno dla każdego pliku:
@@ -75,7 +77,24 @@ Metadane pull requesta (gałąź docelowa, tytuł, opis, komentarze) weź z Bitb
 8. **Policz prawdziwe numery linii** z treści pliku z kroku 7. Numery linii w nagłówkach hunków diffa są względne i łatwo je podać błędnie — numeruj zawsze od początku pełnego pliku, nie od łatki.
 9. **Zastosuj trzy checklisty** — standardy projektu (A), ogólna jakość kodu (B) i zgodność z analizą (C) — do każdej zmienionej lub dodanej klasy Java w pull requeście oraz do każdego innego pliku uznanego za istotny w kroku 6. Czytaj zmiany jak recenzent, nie jak linter: pytaj "czy to zaakceptuję?", "co może pójść nie tak na produkcji?" oraz "czy to realizuje to, co opisuje analiza?", a nie tylko "czy zgadza się z sześcioma nazwanymi regułami?".
 10. **Napisz raport** według szablonu poniżej, po polsku, do pliku Markdown (patrz Output).
-11. **Zgłoś się do użytkownika** w czacie: ścieżka pliku, liczba uwag, jednozdaniowe streszczenie najpoważniejszego problemu (jeśli jest) oraz informacja, czy zgodność z analizą została sprawdzona.
+11. **Zgłoś się do użytkownika** w czacie: ścieżka pliku, liczba uwag, jednozdaniowe streszczenie najpoważniejszego problemu (jeśli jest) oraz informacja, czy zgodność z analizą i pokrycie macierzy testami zostały sprawdzone. W trybie przyrostowym dodaj liczbę poprzednich uwag naprawionych, nienaprawionych i naprawionych częściowo.
+
+### Tryb przyrostowy
+
+Przegląd przyrostowy służy do pętli „przegląd → poprawki → ponowny przegląd” na tym samym pull requeście. Skill nadal niczego nie poprawia — poprawki robi zwykła sesja albo autor, a ten tryb tylko sprawdza ich efekt.
+
+1. **Kiedy go użyć.** Raport `CODE_REVIEW/<nazwa-gałęzi-źródłowej>.md` istnieje, a ostatni przeglądany commit zapisany w jego nagłówku różni się od bieżącego końca gałęzi źródłowej.
+   - Jeżeli commit z raportu jest równy bieżącemu końcowi gałęzi, nie ma nic nowego do przeglądu — powiedz to użytkownikowi i zapytaj, czy wykonać pełny przegląd od nowa.
+   - Jeżeli commitu z raportu nie ma w historii gałęzi (`git -C <repo> merge-base --is-ancestor <poprzedni-commit> <gałąź-źródłowa>` kończy się błędem, na przykład po przepisaniu historii), wykonaj pełny przegląd, ale i tak zweryfikuj poprzednie uwagi według punktu 3 i zaznacz w nagłówku raportu, dlaczego przegląd nie jest przyrostowy.
+   - Jeżeli użytkownik wprost prosi o pełny przegląd, wykonaj pełny przegląd.
+2. **Zakres nowych uwag.** Checklisty A, B i C stosujesz tylko do zmian z `git -C <repo> diff <poprzedni-commit> <gałąź-źródłowa>`, ograniczonych do plików należących do zakresu całego pull requesta z kroku 3. Jeżeli autor scalił w tym czasie gałąź docelową do swojej gałęzi, zmiany, które przyszły z gałęzi docelowej, nie są przedmiotem przeglądu.
+3. **Weryfikacja poprzednich uwag.** Odczytaj z poprzedniego raportu każdą uwagę (z sekcji „Uwagi” i „Zgodność z analizą”) i dla każdej sprawdź bieżący stan kodu na końcu gałęzi źródłowej. Ustal status:
+   - **naprawiona** — problemu nie ma już w kodzie (także wtedy, gdy kod został usunięty albo przeniesiony, a problem nie przeszedł razem z nim);
+   - **nienaprawiona** — problem jest w kodzie bez zmian;
+   - **naprawiona częściowo** — zmiana idzie w dobrą stronę, ale problem nie zniknął całkiem; napisz, czego nadal brakuje.
+   Podaj bieżący plik i linię — numery linii mogły się przesunąć, więc policz je od nowa z pełnej treści pliku. Nie oznaczaj uwagi jako naprawionej tylko dlatego, że zmienił się wiersz, którego dotyczyła; sprawdź, czy zniknął sam problem.
+4. **Pokrycie macierzy testami** (pozycja 18) zawsze oceniasz dla stanu całego pull requesta, nie tylko nowych commitów — test mógł zostać dodany wcześniej albo usunięty teraz.
+5. **Raport.** Nadpisujesz plik jak przy pełnym przeglądzie, ale tak, żeby nie zgubić niczego z poprzedniego raportu: w sekcji „Weryfikacja poprzednich uwag” jest tabela wszystkich poprzednich uwag ze statusem, a pod nią pełny opis każdej uwagi nienaprawionej i naprawionej częściowo, przepisany z poprzedniego raportu z aktualnymi liniami. Sekcja „Uwagi” zawiera tylko nowe uwagi z punktu 2.
 
 ### Speeding up cross-file checks with graphify
 
@@ -101,7 +120,7 @@ Zastosuj to niezależnie od standardów A — nawet pull request w pełni zgodny
 | # | Kategoria | Co sprawdzić |
 |---|-----------|---------------|
 | 7 | Poprawność logiki | Czy zmieniona logika obsługuje przypadki brzegowe (`null`, pusta kolekcja albo puste `Optional`, wartości graniczne, pusty tekst)? Czy nie ma oczywistych błędów: złego warunku, odwróconej logiki, pomyłki o jeden, nieobsłużonej gałęzi `switch` albo `if`, założenia o kolejności wykonania, które nie jest gwarantowane? Czy nowy kod robi to, co według nazwy metody i tytułu pull requesta miał robić? |
-| 8 | Bezpieczeństwo | Czy dane wejściowe od użytkownika są walidowane przed użyciem (długość, format, zakres)? Czy nie ma możliwości wstrzyknięcia (konkatenacja SQL zamiast parametrów, budowanie filtra LDAP przez konkatenację zamiast `LdapEncoder` albo parametryzacji, przejście po katalogach przy operacjach na plikach)? Czy dane wrażliwe (hasła, tokeny, dane osobowe) nie trafiają do logów ani komunikatów wyjątków? Czy nie ma zahardkodowanych sekretów albo haseł w kodzie produkcyjnym (w jawnych danych testowych, na przykład w plikach `test-data`, to nie jest naruszenie). |
+| 8 | Bezpieczeństwo i autoryzacja | Czy dane wejściowe od użytkownika są walidowane przed użyciem (długość, format, zakres)? Czy nie ma możliwości wstrzyknięcia (konkatenacja SQL zamiast parametrów, budowanie filtra LDAP przez konkatenację zamiast `LdapEncoder` albo parametryzacji, przejście po katalogach przy operacjach na plikach)? Czy dane wrażliwe (hasła, tokeny, dane osobowe) nie trafiają do logów ani komunikatów wyjątków? Czy nie ma zahardkodowanych sekretów albo haseł w kodzie produkcyjnym (w jawnych danych testowych, na przykład w plikach `test-data`, to nie jest naruszenie)? **Autoryzacja** — dla każdego nowego albo zmienionego endpointu: czy ma kontrolę uprawnień (`@PreAuthorize`, `@Secured`, reguła w konfiguracji bezpieczeństwa albo odpowiednik używany w tym repozytorium — sprawdź, jak zabezpieczone są sąsiednie endpointy)? Czy brak uprawnień kończy się odpowiedzią 403 zgodnie z analizą, a nie 404, 500 albo pustą odpowiedzią 200? Czy da się dostać do cudzego zasobu przez podmianę identyfikatora w ścieżce albo w treści żądania, czyli czy kod sprawdza, że zasób należy do zalogowanego użytkownika albo jego jednostki, a nie tylko, że istnieje? Czy istnieje test negatywny, który wywołuje endpoint bez uprawnień i oczekuje 403? |
 | 9 | Wydajność | Czy nie ma zapytania N+1 (pętla wykonująca zapytanie do bazy albo wywołanie LDAP lub HTTP dla każdego elementu kolekcji)? Czy kolekcja albo strumień nie jest przetwarzany bez potrzeby wielokrotnie (to samo obliczenie lub zapytanie powtórzone w pętli zamiast policzone raz)? Czy nowy kod nie ładuje do pamięci całego, potencjalnie dużego zbioru danych tam, gdzie wystarczyłaby paginacja albo strumieniowanie? |
 | 10 | Zarządzanie zasobami i wątki | Czy zasoby (strumienie, połączenia, kontekst LDAP, transakcje) są zamykane przez try-with-resources albo przez kontener, a nie ręcznie i warunkowo? Czy pole instancyjne komponentu singletonowego (bean Springa) nie przechowuje mutowalnego stanu współdzielonego między żądaniami albo wątkami bez synchronizacji? |
 | 11 | Obsługa błędów | Czy wyjątki nie są połykane w pustym bloku `catch` ani logowane bez kontekstu pozwalającego zdiagnozować przyczynę? Czy nie łapie się nadmiernie ogólnego `Exception` albo `RuntimeException` tam, gdzie da się złapać konkretny typ? Czy komunikat nowego wyjątku (na przykład własnej klasy `XxxException`) niesie wystarczający kontekst (jaka wartość, jaki identyfikator), a nie tylko ogólnikowy tekst? |
@@ -109,7 +128,7 @@ Zastosuj to niezależnie od standardów A — nawet pull request w pełni zgodny
 
 ## Checklist C — zgodność z analizą systemową
 
-Pomiń tę checklistę tylko wtedy, gdy nie ma linku do analizy (patrz punkt 3 sekcji "Wejście: dwa linki"), i wtedy jawnie napisz w raporcie, że nie została zastosowana.
+Pomiń pozycje 13–17 tylko wtedy, gdy nie ma linku do analizy (patrz punkt 3 sekcji "Wejście: dwa linki"), i wtedy jawnie napisz w raporcie, że nie zostały zastosowane. Pozycję 18 pomijasz tylko wtedy, gdy nie ma planu implementacji z macierzą.
 
 Analiza systemowa jest źródłem prawdy o tym, co ta zmiana miała realizować. Każdą niezgodność raportuj dokładnie tak samo jak uwagę z analizy statycznej: **plik (klasa), numer linii, na czym polega niezgodność**, oraz czego analiza wymaga. Jeśli niezgodność polega na tym, że czegoś **brakuje**, podaj plik i linię miejsca, w którym tego brakuje — na przykład metodę, w której powinna znaleźć się walidacja, albo klasę kontraktu, w której powinno znaleźć się pole. Nie zostawiaj uwagi bez lokalizacji w kodzie.
 
@@ -120,13 +139,17 @@ Analiza systemowa jest źródłem prawdy o tym, co ta zmiana miała realizować.
 | 15 | Kontrakt | Czy endpointy, metody, nazwy i typy pól żądania oraz odpowiedzi, kody statusu i format błędu odpowiadają kontraktowi z analizy? Czy kod nie dodaje pola albo endpointu, którego analiza nie przewiduje, i nie zmienia istniejącego kontraktu w sposób niezgodny z analizą? |
 | 16 | Reguły biznesowe | Czy warunki, progi, wartości domyślne, kolejność kroków i zachowanie w sytuacjach błędnych są dokładnie takie, jak opisuje analiza? Czy kod nie realizuje reguły prawie poprawnie — na przykład porównanie ostre zamiast nieostrego, inna wartość domyślna, inna reakcja na brak danych? |
 | 17 | Nadmiarowy zakres | Czy pull request nie wprowadza funkcjonalności, której analiza w ogóle nie opisuje? Taki nadmiar nie jest automatycznie błędem, ale wymaga zgłoszenia jako rozbieżność ze źródłem prawdy. |
+| 18 | Pokrycie macierzy testami | Tylko gdy istnieje plan implementacji z sekcją „Macierz wymagań i testów” (krok 3). Dla każdego wiersza macierzy dotyczącego tego repozytorium: czy w pull requeście (albo w kodzie, który pull request zmienia) jest test odpowiadający temu wierszowi? Nazwa z planu jest wskazówką, nie wymogiem — test może się nazywać inaczej. Czy test **faktycznie weryfikuje regułę**: czy przygotowuje dane, w których reguła ma znaczenie, wywołuje kod, który ją realizuje, i sprawdza oczekiwany wynik z analizy (wartość, kod statusu, wyjątek, stan w bazie)? Test, który tylko wywołuje metodę i sprawdza brak wyjątku, `assertNotNull`, albo który przechodziłby także przy złamanej regule, nie pokrywa wiersza. Wiersz oznaczony w planie jako „brak testu” z uzasadnieniem nie jest brakiem, ale sprawdź, czy uzasadnienie nadal jest prawdziwe. |
 
 Rozstrzyganie wątpliwości w checkliście C:
 
 - Jeśli analiza **nie wypowiada się** na dany temat, nie wymyślaj wymagania — nie zgłaszaj niezgodności tam, gdzie analiza po prostu milczy. Jeśli to milczenie dotyczy czegoś istotnego, na przykład zachowania przy braku danych, napisz o tym w sekcji "Pytania i luki w analizie", a nie jako naruszenie.
 - Jeśli analiza jest **sprzeczna z opisem pull requesta albo z komentarzem recenzenta**, zgłoś to jako rozbieżność i napisz, które źródło mówi co. Nie wybieraj samodzielnie, która wersja obowiązuje.
 - Jeśli komentarz pod analizą koryguje jej treść, zastosuj poprawkę z komentarza, ale zaznacz w uwadze, że pochodzi ona z komentarza, a nie z głównej treści dokumentu.
-- Analiza może opisywać także część frontendową albo zmiany w innym repozytorium. Nie zgłaszaj ich jako braków w tym pull requeście — wypisz je w sekcji "Poza zakresem tego pull requesta".
+- Analiza może opisywać także część frontendową albo zmiany w innym repozytorium. Nie zgłaszaj ich jako braków w tym pull requeście — wypisz je w sekcji "Poza zakresem tego pull requesta". To samo dotyczy wierszy macierzy testów przypisanych do kroków planu w innym repozytorium.
+- Pozycja 18 nie wymaga linku do analizy — opiera się na planie. Jeśli nie ma analizy, ale jest plan, nadal ją zastosuj.
+
+Jeżeli pull request dodaje albo zmienia endpointy, reguły uprawnień, konfigurację bezpieczeństwa albo uwierzytelnianie, w podsumowaniu raportu zalec dodatkowe uruchomienie wbudowanej komendy `/security-review` na tej gałęzi — ten przegląd sprawdza autoryzację na poziomie zgodności z analizą i standardami, a nie jest pełnym audytem bezpieczeństwa.
 
 Report only what the pull request actually introduces or changes — do not flag pre-existing code in unrelated classes the pull request did not touch, unless a change in this pull request makes an existing violation worse or directly relevant.
 
@@ -146,15 +169,33 @@ Pull request: <link do Bitbucketa>
 Analiza systemowa: <link do Confluence albo "brak — przegląd wykonany bez weryfikacji zgodności z analizą">
 Gałąź źródłowa: <nazwa> (ostatni przeglądany commit: <skrócony hash>)
 Gałąź docelowa: <nazwa>
-Zakres: <lista zmienionych plików istotnych dla przeglądu, na przykład klasy .java oraz skrypty .sql>
+Tryb przeglądu: <"pełny" albo "przyrostowy — zmiany od commita <skrócony hash poprzedniego przeglądu>" albo "pełny — poprzednio przeglądanego commita nie ma już w historii gałęzi">
+Plan implementacji: <ścieżka do IMPLEMENTATION_PLAN_<KLUCZ>.md albo "brak — pokrycia macierzy testami nie sprawdzono">
+Zakres: <lista zmienionych plików istotnych dla przeglądu, na przykład klasy .java oraz skrypty .sql; w trybie przyrostowym tylko pliki zmienione od poprzedniego przeglądu>
+
+## Weryfikacja poprzednich uwag
+
+<tylko w trybie przyrostowym albo gdy istniał poprzedni raport; w pełnym przeglądzie bez poprzedniego raportu pomiń tę sekcję całkowicie>
+
+| Poprzednia uwaga | Tytuł | Status | Bieżące miejsce w kodzie | Komentarz |
+|---|---|---|---|---|
+| 1 | <tytuł z poprzedniego raportu> | naprawiona | — | <jednym zdaniem: co zmieniono> |
+| 2 | <tytuł> | nienaprawiona | `pełna.ścieżka.NazwaKlasy`, linia <N> | <jednym zdaniem> |
+| C1 | <tytuł> | naprawiona częściowo | `<ścieżka>`, linia <N> | <czego nadal brakuje> |
+
+### Poprzednia uwaga 2. <tytuł> (nienaprawiona)
+
+<pełny opis przepisany z poprzedniego raportu w tym samym formacie co w sekcji „Uwagi”, z aktualnym numerem linii; to samo dla każdej uwagi naprawionej częściowo, z dopiskiem, czego nadal brakuje>
 
 ## Uwagi
+
+<w trybie przyrostowym tylko nowe uwagi dotyczące zmian od poprzedniego przeglądu>
 
 ### 1. <krótki, konkretny tytuł uwagi>
 
 - **Klasa:** `pełna.ścieżka.pakietu.NazwaKlasy`
 - **Linia:** <numer linii w pliku>
-- **Standard/Kategoria:** <jedna z pozycji checklisty A (1–6) albo checklisty B (7–12), na przykład "jOOQ dla odczytów" albo "Bezpieczeństwo">
+- **Standard/Kategoria:** <jedna z pozycji checklisty A (1–6) albo checklisty B (7–12), na przykład "jOOQ dla odczytów" albo "Bezpieczeństwo i autoryzacja">
 - **Co jest nie tak:** <precyzyjny, prosty opis problemu, bez skrótów>
 - **Dlaczego to problem:** <konkretna konsekwencja — jaką kontrolę tracimy, jaki błąd może powstać w produkcji, jaki jest scenariusz jego wystąpienia>
 - **Rekomendacja:** <konkretna zmiana do wprowadzenia>
@@ -169,7 +210,7 @@ Zakres: <lista zmienionych plików istotnych dla przeglądu, na przykład klasy 
 
 - **Plik:** `<ścieżka/do/pliku>` (dla pliku Java podaj też klasę `pełna.ścieżka.pakietu.NazwaKlasy`)
 - **Linia:** <numer linii w pliku; przy braku implementacji podaj linię miejsca, w którym brakująca logika powinna się znaleźć>
-- **Kategoria:** <jedna z pozycji checklisty C (13–17), na przykład "Model danych i nazewnictwo">
+- **Kategoria:** <jedna z pozycji checklisty C (13–18), na przykład "Model danych i nazewnictwo">
 - **Czego wymaga analiza:** <dokładne wymaganie, ze wskazaniem fragmentu albo sekcji analizy; jeśli pochodzi z komentarza pod analizą, napisz to>
 - **Co robi kod:** <co faktycznie jest zaimplementowane>
 - **Na czym polega niezgodność:** <różnica opisana wprost, bez skrótów>
@@ -185,9 +226,24 @@ Zakres: <lista zmienionych plików istotnych dla przeglądu, na przykład klasy 
 
 <miejsca, w których analiza milczy albo jest sprzeczna z opisem pull requesta, i trzeba to rozstrzygnąć z autorem analizy — albo "brak">
 
+## Pokrycie macierzy testami
+
+<jeśli nie znaleziono planu implementacji z macierzą, napisz tutaj jedno zdanie: "Nie sprawdzono — nie znaleziono planu implementacji z macierzą wymagań i testów dla tej gałęzi." i pomiń tabelę>
+
+| Wymaganie | Test z planu | Test w kodzie | Status | Uzasadnienie |
+|---|---|---|---|---|
+| REG-01 | `PaymentScheduleIT.shouldReject_whenDueDateInPast` | `PaymentScheduleIT.java`, linia <N> | pokryte | <jednym zdaniem: co test sprawdza> |
+| AC-2 | `ScheduleCalculatorTest.shouldSplitAmountIntoInstallments` | — | brak | <czego brakuje> |
+| REG-04 | `...` | `...IT.java`, linia <N> | test nie weryfikuje reguły | <dlaczego test przeszedłby także przy złamanej regule> |
+| REG-05 | brak testu (uzasadnienie w planie) | — | wyłączone uzasadnieniem | <czy uzasadnienie nadal jest prawdziwe> |
+
+Wiersze dotyczące innych repozytoriów: <lista identyfikatorów albo "brak">.
+
+Każdy wiersz o statusie "brak" albo "test nie weryfikuje reguły" ma też odpowiadającą mu niezgodność w sekcji "Zgodność z analizą" (kategoria "Pokrycie macierzy testami"), z plikiem i linią miejsca, w którym test powinien się znaleźć.
+
 ## Inne istotne obserwacje
 
-<tylko jeśli w przeglądanym kodzie widać coś wyraźnie błędnego spoza siedemnastu pozycji powyżej — na przykład kod, który się nie skompiluje, brakującą adnotację wymaganą przez JPA, albo oczywisty błąd logiczny nieujęty gdzie indziej. Opisz to tym samym sposobem: plik, klasa, linia, co jest nie tak, dlaczego to problem. Pomiń tę sekcję całkowicie, jeśli nic takiego nie zauważono — nie szukaj na siłę dodatkowych uwag.>
+<tylko jeśli w przeglądanym kodzie widać coś wyraźnie błędnego spoza osiemnastu pozycji powyżej — na przykład kod, który się nie skompiluje, brakującą adnotację wymaganą przez JPA, albo oczywisty błąd logiczny nieujęty gdzie indziej. Opisz to tym samym sposobem: plik, klasa, linia, co jest nie tak, dlaczego to problem. Pomiń tę sekcję całkowicie, jeśli nic takiego nie zauważono — nie szukaj na siłę dodatkowych uwag.>
 
 ## Podsumowanie
 
@@ -195,6 +251,9 @@ Zakres: <lista zmienionych plików istotnych dla przeglądu, na przykład klasy 
 - Liczba niezgodności z analizą (checklista C): <N albo "nie sprawdzono — brak linku do analizy">
 - Standardy i kategorie naruszone w tym pull requeście: <lista>
 - Zgodność z analizą: <jedno z: "zgodny — nie znaleziono niezgodności"; "niezgodny — <N> niezgodności, najpoważniejsza: <jedno zdanie>"; "nie sprawdzono — do przeglądu nie podano linku do analizy systemowej">
+- Pokrycie macierzy testami: <"<pokryte>/<wszystkie> wierszy pokrytych, <N> braków, <N> testów niesprawdzających reguły" albo "nie sprawdzono — brak planu implementacji">
+- Poprzednie uwagi: <tylko gdy istniał poprzedni raport: "<N> naprawionych, <N> nienaprawionych, <N> naprawionych częściowo">
+- Zalecenie dodatkowego przeglądu bezpieczeństwa: <tylko gdy pull request zmienia endpointy, uprawnienia albo konfigurację bezpieczeństwa: "zalecane uruchomienie `/security-review` na tej gałęzi">
 ```
 
 If no violations are found, still write the file, stating explicitly that the reviewed pull request complies with all standards from checklist A, raises no concerns under checklist B, and matches the system analysis under checklist C (or that checklist C was not applied, because there was no analysis link), and list which classes were checked.
@@ -219,6 +278,13 @@ If no violations are found, still write the file, stating explicitly that the re
 - Spending time building a graphify knowledge graph for a repository that doesn't already have one, just to review one pull request — only use graphify when `graphify-out/` already exists.
 - Naming the output file after the pull request number when the source branch name is known, or writing it outside `CODE_REVIEW/` — the location is `CODE_REVIEW/<nazwa-gałęzi-źródłowej>.md`, created if missing.
 - Using a branch name containing `/` as-is in the file path (it would create an unwanted subdirectory) instead of replacing `/` with `-` first.
+- Overwriting an existing report without reading it first — the previous findings must be verified (incremental mode) and the unresolved ones carried over in full, otherwise they are lost.
+- In incremental mode, raising new findings in code that did not change since the previous review, or in changes that arrived by merging the target branch into the source branch.
+- Marking a previous finding as fixed because its line changed, without checking that the problem itself is gone.
+- Counting a matrix row as covered because a test with a matching name exists, without reading the test — a test that only checks "no exception" or `assertNotNull`, or would pass with the rule broken, does not cover the row.
+- Asking for the implementation plan or blocking the review when it is missing — the matrix check is skipped and the report says so.
+- Accepting a new endpoint without checking authorization: a missing permission check, a response other than 403 for a user without permission, access to another user's resource by changing an identifier, or no negative 403 test.
+- Fixing the findings in code — this skill is read-only; fixes are done in a normal session, and the next run of this skill verifies them.
 
 ## Styl dokumentu
 
