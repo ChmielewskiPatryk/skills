@@ -36,23 +36,24 @@ The skill does not assume which services exist. It finds out from the repositori
    - wyznacz gałąź bazową (domyślna gałąź zdalna, `git -C <repo> symbolic-ref refs/remotes/origin/HEAD`, albo gałąź docelowa podana w planie) i policz zmiany: `git -C <repo> diff --name-status $(git -C <repo> merge-base <bazowa> <gałąź-zadania>) <gałąź-zadania>`;
    - repozytorium z gałęzią zadania i niepustym diffem jest **zmodyfikowane w zadaniu**.
    Jeżeli istnieje `IMPLEMENTATION_PLAN/IMPLEMENTATION_PLAN_<KLUCZ>.md`, porównaj tę listę z repozytoriami wymienionymi w krokach planu. Repozytorium z planu bez gałęzi albo bez zmian zgłoś w raporcie jako „zaplanowane, ale niezmienione” — to sygnał, że część zadania mogła zostać pominięta. Nie przerywaj z tego powodu testu.
-4. **Podziel zmodyfikowane projekty na usługi i biblioteki.** Usługa to projekt, który da się uruchomić jako proces z portem HTTP. Rozpoznawaj po kolei:
+4. **Podziel zmodyfikowane projekty na usługi i biblioteki** — samodzielnie, bez pytania. W tym zespole usługi to aplikacje Java uruchamiane przez Gradle, a biblioteki to projekty Gradle bez kodu wykonywalnego. Rozpoznawaj po kolei:
    - wpis w `SMOKE_TEST/srodowisko.md`, jeżeli jest — ma pierwszeństwo;
-   - plugin `org.springframework.boot` w `build.gradle(.kts)` modułu (z włączonym zadaniem `bootJar`/`bootRun`) albo klasa z `@SpringBootApplication` → usługa;
-   - plugin `java-library`, `maven-publish` bez Spring Boot, wyłączony `bootJar`, specyfikacja OpenAPI z generowaniem kodu jako jedyna zawartość → biblioteka (na przykład kontrakt API);
-   - przypadki niejednoznaczne → zapytaj w kroku 6.
+   - projekt ma kod wykonywalny: klasę z metodą `main` albo z `@SpringBootApplication`, plugin `org.springframework.boot` lub `application` w `build.gradle(.kts)` → **usługa**;
+   - projekt Gradle bez kodu wykonywalnego (brak klasy z `main`, plugin `java-library` lub `maven-publish`, na przykład sama specyfikacja OpenAPI z generowaniem kodu) → **biblioteka** (na przykład kontrakt API);
+   - pytaj tylko wtedy, gdy projekt ma kod wykonywalny, ale jest wyraźnie narzędziem, a nie usługą HTTP (na przykład moduł z samymi testami albo generator).
    W raporcie wypisz obie grupy.
 5. **Zapewnij widoczność zmienionych bibliotek.** Biblioteki nie są uruchamiane, ale każda usługa, która od nich zależy, musi zbudować się z ich wersją z gałęzi zadania, a nie z wersją z repozytorium artefaktów. Sprawdź, jak usługa deklaruje zależność:
    - composite build (`includeBuild` w `settings.gradle`) albo zależność projektowa — nic nie trzeba robić;
    - zależność po współrzędnych Maven — opublikuj bibliotekę lokalnie (`./gradlew publishToMavenLocal` w repozytorium biblioteki) i upewnij się, że usługa ma `mavenLocal()` w repozytoriach oraz że wersja w usłudze odpowiada opublikowanej. Jeżeli wersje się nie zgadzają albo nie ma `mavenLocal()`, nie zmieniaj plików budowania — zapytaj, czy uruchomić usługę z parametrem nadpisującym wersję (na przykład `--include-build ../<biblioteka>`), czy przerwać.
 6. **Uzupełnij brakującą konfigurację jednym pytaniem.** Dla każdej usługi potrzebujesz: komendy startu, adresu health-checku, sposobu resetu bazy i komendy zatrzymania; dla całości — ścieżki do kolekcji Bruno i nazwy środowiska Bruno. Najpierw spróbuj odczytać to z repozytoriów:
-   - start: `docker-compose.yml`/`compose.yaml` w repozytorium usługi albo w katalogu roboczym, a gdy go nie ma — `./gradlew bootRun` z profilem lokalnym, jeżeli istnieje plik `application-local.yml` (`--args='--spring.profiles.active=local'`);
+   - start usługi: zawsze przez Gradle w katalogu repozytorium — `./gradlew bootRun`, z profilem lokalnym, jeżeli istnieje plik `application-local.yml` (`--args='--spring.profiles.active=local'`); usług nie uruchamiaj w Dockerze;
+   - baza danych: działa w Dockerze, zwykle z pliku docker compose w repozytorium `crypto-async-api`. Znajdź ten plik (albo inny `docker-compose.yml`/`compose.yaml` z usługą bazy danych w repozytoriach katalogu roboczego) i **zawsze zapytaj przy pierwszym uruchomieniu**, czy to właściwa baza dla uruchamianych usług — z hipotezą: ścieżka pliku, nazwa usługi bazy, port. Sprawdź też, czy kontener bazy już działa (`docker ps`); jeżeli tak, nie uruchamiaj drugiego;
    - health-check: `/actuator/health` na porcie z `server.port` w konfiguracji profilu lokalnego (domyślnie `8080`), jeżeli zależność `spring-boot-starter-actuator` jest w projekcie;
-   - reset bazy: usługa bazy w docker compose (`docker compose down -v <usługa-bazy>` i ponowny start) albo `./gradlew update` / `liquibase dropAll update` z konfiguracją lokalną — tylko jeżeli wynika to wprost z repozytorium;
+   - reset bazy: usługa bazy w docker compose (`docker compose -f <plik> rm -sfv <usługa-bazy>` i ponowne `docker compose -f <plik> up -d <usługa-bazy>`) albo `liquibase dropAll update` z konfiguracją lokalną — tylko jeżeli wynika to wprost z repozytorium. Jeżeli kilka usług korzysta z jednej bazy, resetuj ją raz, przed startem pierwszej usługi;
    - Bruno: katalog z plikiem `bruno.json` w repozytoriach albo obok nich, środowisko z `environments/` o nazwie wskazującej na lokalne (`local`, `localhost`).
    Wszystko, czego nie udało się ustalić, zbierz w **jedno pytanie** z hipotezą przy każdej pozycji (tak jak w skillu planowania — programista ma potwierdzić albo poprawić, a nie pisać od zera). Po odpowiedzi zapisz pełną konfigurację w `SMOKE_TEST/srodowisko.md` według szablonu poniżej i dopisz `SMOKE_TEST/` do `.gitignore`, jeżeli katalog leży w repozytorium.
 7. **Sprawdź stan repozytoriów.** Każda uruchamiana usługa i każda zmieniona biblioteka musi być na gałęzi zadania, bez niezacommitowanych zmian albo ze zmianami, o których programista wie. Rozbieżności zgłoś i zapytaj, czy kontynuować.
-8. **Zresetuj bazy** uruchamianych usług (po potwierdzeniu, patrz „Bezpieczeństwo”). Migracje Liquibase wykonają się przy starcie usługi — błąd migracji to wynik testu, nie powód do ręcznej naprawy.
+8. **Uruchom i zresetuj bazy** uruchamianych usług (kontener z docker compose ustalonego w kroku 6; poczekaj, aż port bazy przyjmuje połączenia) (po potwierdzeniu, patrz „Bezpieczeństwo”). Migracje Liquibase wykonają się przy starcie usługi — błąd migracji to wynik testu, nie powód do ręcznej naprawy.
 9. **Uruchom usługi** w kolejności zależności (usługa, którą inne wywołują, startuje pierwsza; jeżeli nie da się tego ustalić, startuj w kolejności z pliku konfiguracji). Procesy uruchamiaj w tle, z wyjściem przekierowanym do `SMOKE_TEST/logi/<usługa>.log`. Czekaj na health-check każdej usługi (odpytuj co kilka sekund, limit 3 minuty na usługę). Jeżeli usługa nie wstanie, przeczytaj koniec jej logu, wpisz przyczynę do raportu, zatrzymaj to, co już uruchomiono, i zakończ na kroku 12 — nie uruchamiaj Bruno na połowie środowiska.
 10. **Wybierz zakres Bruno.** Ustal endpointy dodane lub zmienione w zadaniu: kontrolery i specyfikacje OpenAPI z diffu z kroku 3, ścieżki z kroków planu. Dopasuj je do plików `.bru` (po metodzie i ścieżce URL, a także do plików `.bru` dodanych lub zmienionych w samym zadaniu). Uruchom `bru run <folder-lub-pliki> --env <środowisko> --reporter-json SMOKE_TEST/<KLUCZ>-bruno.json` z katalogu kolekcji. Jeżeli dla nowego endpointu nie ma żadnego pliku `.bru`, nie twórz go — zapisz to w raporcie jako brak pokrycia. Jeżeli programista poprosi o całą kolekcję, uruchom całą.
 11. **Zapisz raport** `SMOKE_TEST/<KLUCZ>.md` według szablonu z sekcji Output.
@@ -64,6 +65,8 @@ The skill does not assume which services exist. It finds out from the repositori
 |---|---|
 | Nie wiadomo, jak uruchomić usługę, jak zresetować jej bazę albo gdzie jest kolekcja Bruno | Zapytaj raz, zbiorczo, z hipotezą; zapisz odpowiedź w `SMOKE_TEST/srodowisko.md`. |
 | Konfiguracja jest już w `SMOKE_TEST/srodowisko.md` | Nie pytaj — użyj jej. Zapytaj tylko o nową usługę, której tam brakuje. |
+| Pierwsze uruchomienie, baza danych z docker compose (zwykle `crypto-async-api`) | Zapytaj, czy to właściwy plik i usługa bazy, z hipotezą (ścieżka, nazwa usługi, port); zapisz odpowiedź w `SMOKE_TEST/srodowisko.md`. |
+| Nie wiadomo, czy projekt jest usługą, czy biblioteką | Nie pytaj — kod wykonywalny (klasa z `main`) oznacza usługę, jego brak bibliotekę. |
 | Pierwszy reset bazy w sesji | Pokaż listę baz i komendy, poczekaj na zgodę. |
 | Adres bazy albo usługi nie jest lokalny | Zatrzymaj się i zapytaj. |
 | Repozytorium jest na innej gałęzi niż gałąź zadania albo ma niezacommitowane zmiany | Zapytaj, czy przełączyć gałąź, testować bieżący stan, czy pominąć repozytorium. |
@@ -136,7 +139,8 @@ Kolekcja Bruno: <ścieżka>
 ## <nazwa-repozytorium>
 
 - Rodzaj: <usługa | biblioteka>
-- Start: <komenda, uruchamiana w katalogu repozytorium>
+- Start: <komenda Gradle, uruchamiana w katalogu repozytorium, na przykład `./gradlew bootRun --args='--spring.profiles.active=local'`>
+- Baza danych: <plik docker compose i nazwa usługi bazy, na przykład `../crypto-async-api/docker-compose.yml`, usługa `postgres`, port 5432>
 - Health-check: <adres>
 - Reset bazy: <komenda albo „brak bazy”>
 - Zatrzymanie: <komenda>
@@ -146,6 +150,8 @@ Kolekcja Bruno: <ścieżka>
 ## Częste błędy
 
 - Uruchamianie z góry ustalonej listy usług zamiast tych, które zostały zmodyfikowane w zadaniu.
+- Uruchamianie usług w Dockerze zamiast przez Gradle albo przyjęcie bazy z `crypto-async-api` bez potwierdzenia przy pierwszym uruchomieniu.
+- Pytanie programisty, czy projekt jest usługą, czy biblioteką, gdy wynika to z kodu (klasa z `main` albo jej brak).
 - Uruchamianie biblioteki (na przykład kontraktu API) jako usługi albo pominięcie tego, że usługa buduje się ze starą wersją biblioteki z repozytorium artefaktów.
 - Reset bazy bez potwierdzenia albo na bazie, która nie jest lokalna.
 - Uruchomienie Bruno, zanim wszystkie usługi przeszły health-check, albo po tym, jak jedna z nich nie wstała.
