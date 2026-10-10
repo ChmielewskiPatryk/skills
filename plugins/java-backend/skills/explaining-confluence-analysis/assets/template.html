@@ -1,0 +1,337 @@
+<!doctype html>
+<!--
+  Szkielet pliku z wyjaśnieniem analizy systemowej.
+  Skopiuj ten plik, zamień zawartość między znacznikami sekcji i usuń komentarze z podpowiedziami.
+  Zasady: jeden samodzielny plik, bez JavaScriptu, cały CSS w <style>, treść po polsku z polskimi znakami.
+  Każdą sekcję, której analiza nie dotyczy, usuń razem z wpisem w spisie treści - nie zostawiaj pustych nagłówków.
+-->
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OPERACJA wersja — wyjaśnienie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f7f7f5; --panel:#fff; --ink:#1d2330; --muted:#6b7280; --line:#e4e4df;
+  --accent:#2f5bd3; --accent-soft:#e9effc; --code-bg:#f3f3ef;
+  --ok:#15803d; --ok-soft:#e7f6ec;
+  --warn:#b45309; --warn-soft:#fdf3e1;
+  --bad:#b91c1c; --bad-soft:#fdeaea;
+  --reg:#7c3aed; --reg-soft:#f1ebfd;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#14161b; --panel:#1b1e25; --ink:#e6e7ea; --muted:#9aa1ad; --line:#2b2f38;
+    --accent:#7aa2ff; --accent-soft:#1f2a44; --code-bg:#111318;
+    --ok:#5fd38a; --ok-soft:#16281d;
+    --warn:#f2b45a; --warn-soft:#2c2414;
+    --bad:#ff8a8a; --bad-soft:#2e1717;
+    --reg:#b69bff; --reg-soft:#241d36;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14161b; --panel:#1b1e25; --ink:#e6e7ea; --muted:#9aa1ad; --line:#2b2f38;
+  --accent:#7aa2ff; --accent-soft:#1f2a44; --code-bg:#111318;
+  --ok:#5fd38a; --ok-soft:#16281d;
+  --warn:#f2b45a; --warn-soft:#2c2414;
+  --bad:#ff8a8a; --bad-soft:#2e1717;
+  --reg:#b69bff; --reg-soft:#241d36;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-size:16px; line-height:1.65;
+}
+code,pre,.mono{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.86em}
+code{background:var(--code-bg);border:1px solid var(--line);border-radius:5px;padding:.1em .35em;white-space:nowrap}
+pre{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto}
+pre code{background:none;border:0;padding:0;white-space:pre}
+a{color:var(--accent);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--accent) 35%,transparent)}
+a:hover{border-bottom-color:var(--accent)}
+
+/* --- układ --- */
+.wrap{max-width:1300px;margin:0 auto;padding:0 16px 80px}
+.layout{display:grid;grid-template-columns:250px minmax(0,980px);gap:40px;align-items:start}
+.main{min-width:0}
+
+/* --- spis tresci --- */
+.toc{position:sticky;top:24px;font-size:.9rem}
+.toc .toc-title{font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 10px}
+.toc ol{list-style:none;margin:0;padding:0;border-left:2px solid var(--line)}
+.toc li{margin:0}
+.toc a{display:block;padding:5px 12px;color:var(--muted);border:0;border-left:2px solid transparent;margin-left:-2px}
+.toc a:hover{color:var(--ink);border-left-color:var(--accent);background:var(--accent-soft)}
+
+/* --- hero --- */
+.hero{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:28px 30px;margin:32px 0 36px}
+.hero .eyebrow{font-size:.75rem;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);font-weight:600;margin:0 0 10px}
+.hero h1{margin:0 0 12px;font-size:1.95rem;line-height:1.2;letter-spacing:-.02em}
+.hero .lead{margin:0;color:var(--muted);max-width:68ch}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.tag{font-size:.78rem;font-weight:500;padding:3px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 22%,transparent)}
+.tag.plain{background:var(--code-bg);color:var(--muted);border-color:var(--line)}
+
+/* --- naglowki sekcji --- */
+section{margin:0 0 44px;scroll-margin-top:24px}
+h2{font-size:1.3rem;letter-spacing:-.01em;margin:0 0 6px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+h2 .n{color:var(--muted);font-weight:500;margin-right:.45em}
+h3{font-size:1.02rem;margin:26px 0 8px}
+p,ul,ol{margin:0 0 14px}
+
+/* --- ramki --- */
+.callout{border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--panel);border-radius:0 12px 12px 0;padding:16px 20px;margin:0 0 18px}
+.callout > :last-child{margin-bottom:0}
+.callout .label{display:block;font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--accent);margin-bottom:6px}
+.callout.ok{border-left-color:var(--ok);background:var(--ok-soft)}
+.callout.ok .label{color:var(--ok)}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.callout.warn .label{color:var(--warn)}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.callout.bad .label{color:var(--bad)}
+
+/* --- karty --- */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:0 0 14px}
+.card > :last-child{margin-bottom:0}
+.card .card-title{font-weight:600;margin:0 0 6px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:0 0 16px}
+.grid2 .card{margin:0}
+
+/* --- odznaka reguly --- */
+.reg{display:inline-block;font-family:"JetBrains Mono",monospace;font-size:.72rem;font-weight:500;padding:2px 7px;border-radius:5px;background:var(--reg-soft);color:var(--reg);border:1px solid color-mix(in srgb,var(--reg) 25%,transparent);white-space:nowrap;vertical-align:.08em}
+
+/* --- kroki --- */
+.flow{list-style:none;margin:0 0 18px;padding:0}
+.step{display:grid;grid-template-columns:34px minmax(0,1fr);gap:14px;margin:0 0 12px}
+/* kolor cyfry to tlo strony - czytelny i w jasnym, i w ciemnym trybie */
+.num{width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--bg);display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:600;margin-top:4px}
+.step .card{margin:0}
+
+/* --- os czasu --- */
+.timeline{list-style:none;margin:0 0 18px;padding:0 0 0 22px;border-left:2px solid var(--line)}
+.doc{position:relative;margin:0 0 16px;padding-left:4px}
+.doc::before{content:"";position:absolute;left:-29px;top:9px;width:11px;height:11px;border-radius:50%;background:var(--panel);border:2px solid var(--accent)}
+.doc .when{font-family:"JetBrains Mono",monospace;font-size:.78rem;color:var(--muted);display:block}
+
+/* --- checklista --- */
+ul.check{list-style:none;margin:0 0 16px;padding:0}
+ul.check li{padding:4px 0 4px 26px;position:relative}
+ul.check li::before{content:"\2610";position:absolute;left:0;top:3px;color:var(--muted);font-size:1.05em}
+ul.check li.done::before{content:"\2611";color:var(--ok)}
+
+/* --- tabele --- */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel);margin:0 0 18px}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{text-align:left;padding:9px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--code-bg);font-weight:600;font-size:.8rem;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+td.nowrap{white-space:nowrap}
+
+footer{color:var(--muted);font-size:.85rem;border-top:1px solid var(--line);padding-top:16px}
+
+@media (max-width:860px){
+  .layout{grid-template-columns:minmax(0,1fr);gap:0}
+  .toc{position:static;margin:0 0 28px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .grid2{grid-template-columns:minmax(0,1fr)}
+  .hero{padding:22px 20px}
+  .hero h1{font-size:1.5rem}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <p class="eyebrow">Analiza po ludzku · Confluence KRYPTO · wersja X z RRRR-MM-DD</p>
+  <h1>OPERACJA — krótki opis zadania jednym zdaniem</h1>
+  <p class="lead">
+    Streszczenie strony <a href="LINK_DO_STRONY">OPERACJA wersja</a> napisane dla programisty backendu.
+    Źródłem prawdy jest Confluence — ten plik tylko tłumaczy, co jest do zrobienia.
+  </p>
+  <div class="tags">
+    <span class="tag">KRYPTO-000</span>
+    <span class="tag plain">bez endpointu</span>
+    <span class="tag plain">crypto-au-backend</span>
+  </div>
+</header>
+
+<div class="layout">
+
+  <nav class="toc">
+    <p class="toc-title">Spis treści</p>
+    <ol>
+      <li><a href="#w-skrocie">W jednym akapicie</a></li>
+      <li><a href="#problem">Jaki problem rozwiązujemy</a></li>
+      <li><a href="#slowniczek">Słowniczek</a></li>
+      <li><a href="#przebieg">Przebieg krok po kroku</a></li>
+      <li><a href="#reguly">Kluczowe reguły</a></li>
+      <li><a href="#baza">Co ląduje w bazie</a></li>
+      <li><a href="#bledy">Współbieżność i błędy</a></li>
+      <li><a href="#poza-zakresem">Czego nie robimy</a></li>
+      <li><a href="#todo">Lista rzeczy do zrobienia</a></li>
+      <li><a href="#testy">Scenariusze testowe</a></li>
+      <li><a href="#pytania">Do wyjaśnienia</a></li>
+    </ol>
+  </nav>
+
+  <main class="main">
+
+    <section id="w-skrocie">
+      <h2><span class="n">1.</span>W jednym akapicie</h2>
+      <div class="callout ok">
+        <span class="label">O co chodzi</span>
+        <p>Trzy do pięciu zdań: co trzeba zbudować i po co.</p>
+        <p><strong>Czego tu nie ma:</strong> na przykład endpointu, zmian w strukturze JSON, frontendu.</p>
+      </div>
+    </section>
+
+    <section id="problem">
+      <h2><span class="n">2.</span>Jaki problem rozwiązujemy</h2>
+      <p>Wyjaśnienie po ludzku, najlepiej na przykładzie albo osi czasu.</p>
+      <ul class="timeline">
+        <li class="doc"><span class="when">10 marca, 09:00</span> co się dzieje i czego brakuje</li>
+        <li class="doc"><span class="when">10 marca, 09:15</span> co ma zrobić nowy mechanizm</li>
+      </ul>
+    </section>
+
+    <section id="slowniczek">
+      <h2><span class="n">3.</span>Słowniczek</h2>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Pojęcie</th><th>Co to znaczy</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap"><code>KOD</code></td><td>Rozwinięcie skrótu i wyjaśnienie, do czego służy.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="przebieg">
+      <h2><span class="n">4.</span>Przebieg krok po kroku</h2>
+      <ol class="flow">
+        <li class="step">
+          <div class="num">1</div>
+          <div class="card">
+            <p class="card-title">Nazwa kroku <span class="reg">REG-01</span></p>
+            <p>Co się dzieje w tym kroku, jednym albo dwoma zdaniami.</p>
+          </div>
+        </li>
+        <li class="step">
+          <div class="num">2</div>
+          <div class="card">
+            <p class="card-title">Kolejny krok <span class="reg">REG-02</span></p>
+            <p>Opis.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="reguly">
+      <h2><span class="n">5.</span>Kluczowe reguły</h2>
+      <h3>Nazwa reguły <span class="reg">REG-02</span></h3>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Warunek</th><th>Co robimy</th></tr></thead>
+          <tbody>
+            <tr><td>sytuacja</td><td>oczekiwane zachowanie</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="baza">
+      <h2><span class="n">6.</span>Co ląduje w bazie</h2>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Tabela</th><th>Kiedy</th><th>Co zapisujemy</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap"><code>NAZWA_TABELI</code></td><td>moment zapisu</td><td>kolumny i wartości</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="bledy">
+      <h2><span class="n">7.</span>Współbieżność i błędy</h2>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Sytuacja</th><th>Oczekiwane zachowanie</th></tr></thead>
+          <tbody>
+            <tr><td>co może pójść nie tak</td><td>co ma się wtedy stać</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="poza-zakresem">
+      <h2><span class="n">8.</span>Czego nie robimy</h2>
+      <div class="callout warn">
+        <span class="label">Poza zakresem</span>
+        <ul>
+          <li>rzecz, którą robi ktoś inny albo inne zadanie</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="todo">
+      <h2><span class="n">9.</span>Lista rzeczy do zrobienia (backend)</h2>
+      <div class="callout">
+        <span class="label">Stan repo</span>
+        <p>Co już istnieje w repozytorium, a czego nie ma — dwa, trzy zdania ze ścieżkami plików.</p>
+      </div>
+      <h3>Konfiguracja</h3>
+      <ul class="check"><li>zadanie do zrobienia</li></ul>
+      <h3>Zapytania (jOOQ)</h3>
+      <ul class="check"><li>zadanie do zrobienia</li></ul>
+      <h3>Zapisy (JPA)</h3>
+      <ul class="check"><li>zadanie do zrobienia</li></ul>
+      <h3>Historia i powiadomienia</h3>
+      <ul class="check"><li>zadanie do zrobienia</li></ul>
+      <h3>Słowniki i changesety</h3>
+      <ul class="check"><li>zadanie do zrobienia</li></ul>
+      <h3>Testy integracyjne</h3>
+      <ul class="check"><li>zadanie do zrobienia</li></ul>
+    </section>
+
+    <section id="testy">
+      <h2><span class="n">10.</span>Scenariusze testowe</h2>
+      <div class="callout">
+        <span class="label">Tło</span>
+        <p>Czas systemowy i dane testowe z sekcji Background.</p>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>#</th><th>Scenariusz</th><th>Sedno</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap">1</td><td>nazwa scenariusza</td><td>co sprawdza</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="pytania">
+      <h2><span class="n">11.</span>Do wyjaśnienia</h2>
+      <div class="callout bad">
+        <span class="label">Pytania i ryzyka</span>
+        <ol>
+          <li>pytanie albo ryzyko zauważone przy czytaniu</li>
+        </ol>
+      </div>
+      <p><strong>Czego nie ma w tym streszczeniu:</strong> wypisz, co zostało pominięte i gdzie tego szukać w Confluence.</p>
+    </section>
+
+    <footer>
+      Streszczenie strony <a href="LINK_DO_STRONY">OPERACJA wersja</a> (wersja X z RRRR-MM-DD), przygotowane RRRR-MM-DD.
+      W razie rozbieżności obowiązuje treść w Confluence.
+    </footer>
+
+  </main>
+</div>
+</div>
+</body>
+</html>
