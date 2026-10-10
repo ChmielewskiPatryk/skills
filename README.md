@@ -41,6 +41,10 @@ skills/
         └── skills/
             ├── analyzing-confluence-feasibility/
             │   └── SKILL.md
+            ├── explaining-confluence-analysis/
+            │   ├── SKILL.md
+            │   └── assets/
+            │       └── template.html
             ├── planning-jira-implementation/
             │   └── SKILL.md
             ├── reviewing-java-commits/
@@ -67,6 +71,7 @@ Aktualne pluginy:
 | `java-backend` | `/java-backend:planning-jira-implementation` | Tworzy plan implementacji backendu z zadania Jira i powiązanej analizy systemowej w Confluence → `IMPLEMENTATION_PLAN/IMPLEMENTATION_PLAN_<KLUCZ>.md`. Wymaga dostępu do Jiry i Confluence (dowolny serwer MCP, CLI albo REST API z tokenem). Zapisuje też lokalną kopię analizy w `IMPLEMENTATION_PLAN/.analiza/` i zadaje pytania z cytatem oraz odnośnikiem do konkretnego fragmentu. Plan zawiera macierz wymagań i testów: każda reguła REG i każde kryterium akceptacji ma identyfikator, źródło i test pisany przed kodem. |
 | | `/java-backend:reviewing-java-commits` | Code review pull requesta Java z Bitbucketa (standardy projektu + jakość kodu + zgodność z analizą systemową z Confluence), raport po polsku → `CODE_REVIEW/<gałąź>.md`. Przyjmuje dwa linki: pull request i analizę; bez linku do analizy przegląd nadal się wykonuje, ale raport to odnotowuje. Sprawdza też autoryzację i pokrycie macierzy testami z planu. Gdy raport dla gałęzi już istnieje, działa przyrostowo: przegląda tylko nowe commity i weryfikuje, czy poprzednie uwagi zostały naprawione. |
 | | `/java-backend:analyzing-confluence-feasibility` | Analiza wykonalności rozwiązania opisanego na stronie Confluence — zgodność z modelem bazy danych, spójność kontraktu backend–frontend, wykonalność logiki biznesowej. Raport po polsku: trzy sekcje analizy i sekcja „Pytania do analityka” z blokiem gotowym do wklejenia jako komentarz w Jirze lub Confluence → `ANALIZA_WYKONALNOSCI/<tytuł-strony>.md`. Nie tworzy planu implementacji. |
+| | `/java-backend:explaining-confluence-analysis` | Zamienia stronę analizy systemowej z Confluence (paczka `<OPERACJA> <wersja>`) w jeden samodzielny plik HTML, który prostymi słowami tłumaczy programiście backendu, co jest do zrobienia: problem, przebieg krok po kroku, reguły REG w tabelach, zapisy do bazy, przypadki brzegowe, checklista zakresu, scenariusze testowe i pytania otwarte → `<OPERACJA>_<wersja>_wyjasnienie.html` w katalogu z repozytoriami. To streszczenie, nie kopia strony ani plan implementacji. Szablon wyglądu w `assets/template.html`. |
 | | `/java-backend:smoke-testing-locally` | Lokalny smoke test zadania: ustala, które projekty zmodyfikowano w zadaniu, publikuje zmienione biblioteki do Maven Local, stawia bazę w Dockerze od zera (po potwierdzeniu), uruchamia usługi przez Gradle, sam wyznacza nowe i zmienione endpointy i wywołuje je `curl`-em (ścieżka szczęśliwa i przypadki negatywne z analizy) → `SMOKE_TEST/<KLUCZ>.md` oraz skrypt żądań do ponownego uruchomienia. Konfigurację środowiska zapamiętuje w `SMOKE_TEST/srodowisko.md`. Tylko ręczne wywołanie. |
 | | `/java-backend:running-task-retro` | Retrospektywa zadania: porównuje plan z finalnym kodem, raportami review, pytaniami i smoke testem → `RETRO/<KLUCZ>.md` oraz propozycje zmian w skillach jako łatka `RETRO/<KLUCZ>-skille.patch` do nałożenia w tym repo. Niczego nie zmienia sam. Tylko ręczne wywołanie. |
 
@@ -438,6 +443,7 @@ claude --plugin-dir ./plugins/claude-setup                    # testuj lokalnie
 /java-backend:planning-jira-implementation PROJ-123           # plan implementacji z Jiry
 /java-backend:reviewing-java-commits <link-PR> <link-analizy>  # code review pull requesta
 /java-backend:analyzing-confluence-feasibility <link-strony>  # analiza wykonalności
+/java-backend:explaining-confluence-analysis <link-strony>    # analiza po ludzku jako plik HTML
 /java-backend:smoke-testing-locally PROJ-123                  # lokalny smoke test zadania
 /java-backend:running-task-retro PROJ-123                     # retrospektywa zadania
 ```
