@@ -1,6 +1,6 @@
 {
   "name": "claude-setup",
-  "description": "Skille do konfiguracji samego Claude Code (status line itp.)",
+  "description": "Skille do konfiguracji i obsługi samego Claude Code (status line, dashboard sesji)",
   "author": {
     "name": "Patryk Chmielewski"
   }

@@ -8,7 +8,7 @@
     {
       "name": "claude-setup",
       "source": "./plugins/claude-setup",
-      "description": "Skille do konfiguracji samego Claude Code (status line itp.)"
+      "description": "Skille do konfiguracji i obsługi samego Claude Code (status line, dashboard sesji)"
     },
     {
       "name": "java-backend",
