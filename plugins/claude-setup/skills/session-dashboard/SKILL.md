@@ -15,4 +15,4 @@ To stop the server: `pkill -f 'session-dashboard/build.py --serve'`.
 
 Data sources (read-only): `~/.claude/projects/*/*.jsonl` (transcripts), `~/.claude/sessions/*.json` (running sessions, liveness via `/proc/<pid>`), `~/.claude/projects/*/memory/project_*.md`.
 
-Sections: running sessions (busy/idle, last prompt, `claude --resume <id>`), memory entries (project_*.md + sessions that wrote/read them, newest writer highlighted, each with `claude --resume <id>`), full searchable session list.
+Sections: running sessions (busy/idle, last prompt, `claude --resume <id>`), memory entries (project_*.md + sessions that wrote/read them, newest writer highlighted, each with `claude --resume <id>`), full session list — text search, filter by invoked skill (Skill tool or slash command), running-only toggle.

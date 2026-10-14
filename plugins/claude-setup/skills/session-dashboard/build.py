@@ -28,6 +28,7 @@ def user_text(msg):
 
 MEM_RE = re.compile(r"/memory/(project_[\w.-]+\.md)")
 WRITE_RE = re.compile(r"(>|tee |sed -i|mv |cp )[^\n]*/memory/project_")
+SKILL_RE = re.compile(r"Base directory for this skill: \S*/skills/([\w.-]+)")
 
 
 def mem_touches(name, inp):
@@ -59,7 +60,7 @@ def live_sessions():
 
 def parse(path):
     s = {"id": os.path.basename(path)[:-6], "title": None, "ai_title": None, "prompts": [], "last_prompt": None,
-         "branches": Counter(), "cwd": None, "start": None, "end": None, "keys": Counter(), "assistant": 0, "mem": {}}
+         "branches": Counter(), "cwd": None, "start": None, "end": None, "keys": Counter(), "assistant": 0, "mem": {}, "skills": set()}
     for line in open(path, errors="replace"):
         try:
             o = json.loads(line)
@@ -83,10 +84,15 @@ def parse(path):
             s["cwd"] = o["cwd"]
         if o.get("gitBranch") and o["gitBranch"] != "HEAD":
             s["branches"][o["gitBranch"]] += 1
+        if t == "user":
+            for m in SKILL_RE.finditer(user_text(o.get("message") or {})):
+                s["skills"].add(m.group(1))
         if t == "assistant":
             s["assistant"] += 1
             for b in (o.get("message") or {}).get("content") or []:
                 if isinstance(b, dict) and b.get("type") == "tool_use":
+                    if b.get("name") == "Skill" and (b.get("input") or {}).get("skill"):
+                        s["skills"].add(b["input"]["skill"].split(":")[-1])
                     for f, kind in mem_touches(b.get("name"), b.get("input") or {}):
                         prev = s["mem"].get(f)
                         if not prev or kind == "write":
@@ -188,6 +194,7 @@ def render(live_reload=False):
 
     # --- session table
     rows = []
+    skill_count = Counter(k for s in sessions for k in s["skills"])
     for s in sessions:
         lv = s["live"]
         st = (lv["status"] if lv and lv["alive"] else "") or ""
@@ -197,13 +204,14 @@ def render(live_reload=False):
         plist = "".join(f"<li><span class='muted'>{fmt(t)}</span> {e(clip(p, 400))}</li>" for t, p in s["prompts"])
         proj = (s["cwd"] or "").replace("/home/ubuntu/", "~/")
         q = " ".join([title, first, last, proj, " ".join(s["keys"]), " ".join(s["branches"]), (lv or {}).get("name") or ""]).lower()
-        rows.append(f"""<tr id="s-{s['id']}" data-q="{e(q)}" data-live="{1 if st else 0}">
+        rows.append(f"""<tr id="s-{s['id']}" data-q="{e(q)}" data-live="{1 if st else 0}" data-skills="{e(' '.join(sorted(s['skills'])))}">
 <td>{('<span class="badge %s">%s</span>' % (e(st), e(st))) if st else ''}</td>
 <td class="nowrap">{fmt(s['end'])}<br><span class="muted">{ago(s['end'])}</span></td>
 <td><b>{e(title)}</b><br><span class="muted">{e(proj)} · {e(', '.join(list(s['branches'])[-3:]))}</span>
 <details><summary>{len(s['prompts'])} promptów · ostatni: {e(clip(last, 140))}</summary><ol>{plist}</ol>
 <code>claude --resume {s['id']}</code></details></td>
-<td>{' '.join('<span class="key">%s</span>' % e(k) for k, _ in s['keys'].most_common(4))}</td></tr>""")
+<td>{' '.join('<span class="key">%s</span>' % e(k) for k, _ in s['keys'].most_common(4))}
+{' '.join('<span class="skill">%s</span>' % e(k) for k in sorted(s['skills']))}</td></tr>""")
 
     page = f"""<!doctype html><html lang="pl"><head><meta charset="utf-8"><title>Claude sessions</title>
 <meta name="viewport" content="width=device-width,initial-scale=1"><style>
@@ -217,27 +225,30 @@ h1{{margin:0 0 4px}} h2{{margin:28px 0 10px;font-size:17px}} h3{{margin:6px 0;fo
 .card.busy{{border-left:4px solid var(--busy)}} .card.idle{{border-left:4px solid var(--idle)}}
 .top{{display:flex;gap:8px;align-items:center;justify-content:space-between}} .name{{font-weight:600;flex:1}}
 .badge{{font-size:11px;padding:1px 7px;border-radius:9px;background:var(--bd)}} .badge.busy{{background:var(--busy);color:#fff}} .badge.idle{{background:var(--idle);color:#fff}}
+.skill{{display:inline-block;font-size:11px;border:1px solid var(--acc);color:var(--acc);border-radius:4px;padding:0 5px;margin:1px}}
 .last{{font-size:13px;margin:6px 0}} .key{{display:inline-block;font-size:11px;background:var(--acc);color:#fff;border-radius:4px;padding:0 5px;margin:1px}}
 table{{width:100%;border-collapse:collapse;background:var(--card)}} td{{border-top:1px solid var(--bd);padding:8px;vertical-align:top}}
 .nowrap{{white-space:nowrap}} details summary{{cursor:pointer;color:var(--mut);font-size:12px}} ol{{font-size:12px;max-height:320px;overflow:auto}}
 pre{{white-space:pre-wrap;font-size:12px;max-height:300px;overflow:auto}} ul{{margin:6px 0;padding-left:18px;font-size:13px}}
+select{{font-size:14px;padding:6px;border:1px solid var(--bd);border-radius:6px;background:var(--card);color:var(--fg)}}
 input{{font-size:14px;padding:6px 10px;width:340px;border:1px solid var(--bd);border-radius:6px;background:var(--card);color:var(--fg)}}
 a{{color:var(--acc)}} li{{margin:4px 0}} li.main code{{background:var(--acc);color:#fff}} tr:target{{outline:2px solid var(--acc)}}
 </style></head><body>
 <h1>Claude Code — sesje</h1><div class="muted">wygenerowano {fmt(time.time())} · {len(sessions)} sesji · {len(running)} uruchomionych</div>
 <h2>Teraz uruchomione ({len(running)})</h2><div class="grid">{''.join(cards) or '<span class="muted">brak</span>'}</div>
 <h2>Praca z pamięci ({len(cards_mem)})</h2><input id="tq" placeholder="filtr…" oninput="f('.ticket',this.value)"><p></p><div class="grid">{''.join(cards_mem)}</div>
-<h2>Wszystkie sesje</h2><input id="q" placeholder="szukaj: ticket, branch, tekst promptu…" oninput="f('tbody tr',this.value)">
-<label class="muted"><input type="checkbox" style="width:auto" onchange="document.querySelectorAll('tbody tr').forEach(r=>r.style.display=this.checked&&r.dataset.live=='0'?'none':'')"> tylko uruchomione</label>
+<h2>Wszystkie sesje</h2><input id="q" placeholder="szukaj: ticket, branch, tekst promptu…" oninput="fs()">
+<select id="sk" onchange="fs()"><option value="">wszystkie skille</option>{''.join('<option value="%s">%s (%d)</option>' % (e(k), e(k), n) for k, n in sorted(skill_count.items()))}</select>
+<label class="muted"><input id="lo" type="checkbox" style="width:auto" onchange="fs()"> tylko uruchomione</label>
 <p></p><table><tbody>{''.join(rows)}</tbody></table>
-<script>{AUTO if live_reload else ''}function f(sel,v){{v=v.toLowerCase();document.querySelectorAll(sel).forEach(r=>r.style.display=(r.dataset.q||'').includes(v)?'':'none')}}</script>
+<script>{AUTO if live_reload else ''}function fs(){{const v=q.value.toLowerCase(),k=sk.value,l=lo.checked;document.querySelectorAll('tbody tr').forEach(r=>r.style.display=(r.dataset.q||'').includes(v)&&(!k||r.dataset.skills.split(' ').includes(k))&&!(l&&r.dataset.live=='0')?'':'none')}}function f(sel,v){{v=v.toLowerCase();document.querySelectorAll(sel).forEach(r=>r.style.display=(r.dataset.q||'').includes(v)?'':'none')}}</script>
 </body></html>"""
     stats = "sessions=%d running=%d memory=%d linked=%d" % (len(sessions), len(running), len(cards_mem), sum(os.path.basename(m["file"]) in touched for m in mems))
     return page, stats
 
 
 # serve mode: reload every 30s unless user is searching or has something expanded
-AUTO = ("setInterval(()=>{if(document.hidden||[...document.querySelectorAll('input')].some(i=>i.value)"
+AUTO = ("setInterval(()=>{if(document.hidden||[...document.querySelectorAll('input:not([type=checkbox]),select')].some(i=>i.value)||lo.checked"
         "||document.querySelector('details[open]'))return;location.reload()},30000);")
 
 
