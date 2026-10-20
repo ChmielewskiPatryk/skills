@@ -37,8 +37,7 @@ skills/
     │       │   └── SKILL.md      # pojedynczy skill
     │       └── session-dashboard/
     │           ├── SKILL.md
-    │           ├── build.py      # generator / serwer HTML
-    │           └── start.sh
+    │           └── build.py      # generator strony artefaktu
     └── java-backend/
         ├── .claude-plugin/
         │   └── plugin.json
@@ -72,7 +71,7 @@ Aktualne pluginy:
 | Plugin | Skille | Opis |
 | --- | --- | --- |
 | `claude-setup` | `/claude-setup:context-statusline` | Konfiguruje `ccstatusline`, żeby status line pokazywał zużycie kontekstu |
-| | `/claude-setup:session-dashboard` | Dashboard sesji Claude Code w przeglądarce (http://localhost:8765, odświeżany na żywo): uruchomione sesje (busy/idle, ostatni prompt), wpisy z pamięci `project_*.md` z sesjami, które je zapisały, oraz pełna lista sesji z wyszukiwarką — przy każdej sesji `claude --resume <id>`. Bez Claude: `plugins/claude-setup/skills/session-dashboard/start.sh`. Wymaga `python3` i `curl`. |
+| | `/claude-setup:session-dashboard` | Dashboard sesji Claude Code jako prywatny Artifact na claude.ai, aktualizowany (ten sam URL) przy każdym wywołaniu skilla: zadania (wykonalność → plan → implementacja), uruchomione sesje (busy/idle, ostatni prompt), wpisy z pamięci `project_*.md` z sesjami, które je zapisały, oraz pełna lista sesji z wyszukiwarką — przy każdej sesji `claude --resume <id>`. Bez Claude (lokalny HTML): `python3 plugins/claude-setup/skills/session-dashboard/build.py`. Wymaga `python3`. |
 | `java-backend` | `/java-backend:planning-jira-implementation` | Tworzy plan implementacji backendu z zadania Jira i powiązanej analizy systemowej w Confluence → `IMPLEMENTATION_PLAN/IMPLEMENTATION_PLAN_<KLUCZ>.md`. Wymaga dostępu do Jiry i Confluence (dowolny serwer MCP, CLI albo REST API z tokenem). Zapisuje też lokalną kopię analizy w `IMPLEMENTATION_PLAN/.analiza/` i zadaje pytania z cytatem oraz odnośnikiem do konkretnego fragmentu. Plan zawiera macierz wymagań i testów: każda reguła REG i każde kryterium akceptacji ma identyfikator, źródło i test pisany przed kodem. |
 | | `/java-backend:reviewing-java-commits` | Code review pull requesta Java z Bitbucketa (standardy projektu + jakość kodu + zgodność z analizą systemową z Confluence), raport po polsku → `CODE_REVIEW/<gałąź>.md`. Przyjmuje dwa linki: pull request i analizę; bez linku do analizy przegląd nadal się wykonuje, ale raport to odnotowuje. Sprawdza też autoryzację i pokrycie macierzy testami z planu. Gdy raport dla gałęzi już istnieje, działa przyrostowo: przegląda tylko nowe commity i weryfikuje, czy poprzednie uwagi zostały naprawione. |
 | | `/java-backend:analyzing-confluence-feasibility` | Analiza wykonalności rozwiązania opisanego na stronie Confluence — zgodność z modelem bazy danych, spójność kontraktu backend–frontend, wykonalność logiki biznesowej. Raport po polsku: trzy sekcje analizy i sekcja „Pytania do analityka” z blokiem gotowym do wklejenia jako komentarz w Jirze lub Confluence → `ANALIZA_WYKONALNOSCI/<tytuł-strony>.md`. Nie tworzy planu implementacji. |

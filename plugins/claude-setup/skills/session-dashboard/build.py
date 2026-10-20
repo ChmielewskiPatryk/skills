@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Generate a static HTML dashboard of Claude Code sessions (~/.claude/projects transcripts)."""
+"""Generate the Claude Code sessions dashboard (~/.claude/projects transcripts) as an Artifact page."""
 import glob, html, json, os, re, sys, time
 from collections import Counter, defaultdict
 from datetime import datetime
 
 CLAUDE = os.path.expanduser("~/.claude")
 DEFAULT_OUT = os.path.join(CLAUDE, "dashboard", "index.html")
+URL_FILE = os.path.join(CLAUDE, "dashboard", "artifact_url")  # URL of the published artifact, reused on every run
 KEY_RE = re.compile(r"\b(KRYPTO|KWDT|KWD|SME)-\d+\b")
 NOISE_RE = re.compile(r"^\s*<(command-|local-command|system-reminder|task-notification|bash-)")
 
@@ -42,7 +43,6 @@ SKILL_STAGE = {"analyzing-confluence-feasibility": "feas", "explaining-confluenc
                "smoke-testing-locally": "smoke", "running-task-retro": "retro"}
 HOST_RE = re.compile(r"https?://[\w.-]*(jira|confluence)[\w.-]*")
 HOSTS = {"jira": os.environ.get("JIRA_URL"), "confluence": os.environ.get("CONFLUENCE_URL")}  # else first seen in prompts
-ALLOWED = set()  # artifact paths the server may show via /f
 
 
 def mem_touches(name, inp):
@@ -299,17 +299,16 @@ def stitle(x, n=60):
     return x["title"] or x["ai_title"] or clip(x["prompts"][0][1] if x["prompts"] else "", n)
 
 
-def file_line(path, links, note=""):
-    ALLOWED.add(path)
+def file_line(path, note=""):
     name, d = os.path.basename(path), os.path.dirname(path) + "/"
     ok = os.path.exists(path)
-    nm = f"<a href='/f?p={html.escape(path, quote=True)}' target='_blank'>{e(name)}</a>" if links and ok else e(name)
+    nm = e(name)
     gone = "" if ok else ' <span class="gone">usunięty</span>'
     mt = f' · {ago(os.path.getmtime(path))}' if ok else ""
     return f"""<div class="file">📄 <b>{nm}</b>{gone}<span class="muted">{e(note)}{mt}</span><br><code title="{e(path)}">{e(home(d))}</code></div>"""
 
 
-def render_tasks(groups, links):
+def render_tasks(groups):
     out = []
     for g in groups:
         alive = [x for st in g["stages"].values() for x in st if x["live"] and x["live"]["alive"]]
@@ -318,7 +317,7 @@ def render_tasks(groups, links):
             ss = sorted({x["id"]: x for x in g["stages"][k]}.values(), key=lambda x: x["end"] or 0)
             if not ss and k not in ("feas", "plan", "impl"):
                 continue
-            files = [file_line(f, links, " kopia analizy" if c else "") for f, (c, t) in
+            files = [file_line(f, " kopia analizy" if c else "") for f, (c, t) in
                      sorted(g["files"][k].items(), key=lambda kv: (kv[1][0], -(kv[1][1] or 0)))]
             items = []
             for x in ss:
@@ -349,7 +348,7 @@ def render_tasks(groups, links):
     return "".join(out)
 
 
-def render(live_reload=False):
+def render():
     live = live_sessions()
     sessions = []
     for p in glob.glob(os.path.join(CLAUDE, "projects", "*", "*.jsonl")):
@@ -422,105 +421,60 @@ def render(live_reload=False):
 {' '.join('<span class="skill">%s</span>' % e(k) for k in sorted(s['skills']))}
 {' '.join('<a class="tchip" href="#%s">📁 %s</a>' % (g['id'], e(g['label'])) for g in task_of[s['id']])}</td></tr>""")
 
-    page = f"""<!doctype html><html lang="pl"><head><meta charset="utf-8"><title>Claude sessions</title>
-<meta name="viewport" content="width=device-width,initial-scale=1"><style>
-:root{{--bg:#f7f7f5;--fg:#1d1d1b;--mut:#77756f;--card:#fff;--bd:#e3e1db;--acc:#c96442;--busy:#d08700;--idle:#2e8b57}}
-@media(prefers-color-scheme:dark){{:root{{--bg:#1c1b19;--fg:#ecebe6;--mut:#9a978f;--card:#262522;--bd:#3a3834}}}}
-body{{font:14px/1.45 system-ui,sans-serif;background:var(--bg);color:var(--fg);margin:0;padding:20px 28px}}
-h1{{margin:0 0 4px}} h2{{margin:28px 0 10px;font-size:17px}} h3{{margin:6px 0;font-size:15px}}
-.muted{{color:var(--mut);font-size:12px}} code{{font-size:11px;background:var(--bd);padding:2px 5px;border-radius:4px;user-select:all}}
-.grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}}
-.card,.ticket{{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px}}
+    page = f"""<title>Claude sessions</title><meta name="claude:viewport-fit-sides" content="cover"><style>
+:root{{--bg:#f7f7f5;--fg:#1d1d1b;--mut:#77756f;--card:#fff;--bd:#e3e1db;--acc:#c96442;--busy:#d08700;--idle:#2e8b57;--on:#fff;--gone:#b33}}
+@media(prefers-color-scheme:dark){{:root:not([data-theme="light"]){{--bg:#1c1b19;--fg:#ecebe6;--mut:#9a978f;--card:#262522;--bd:#3a3834;color-scheme:dark}}}}
+:root[data-theme="dark"]{{--bg:#1c1b19;--fg:#ecebe6;--mut:#9a978f;--card:#262522;--bd:#3a3834;color-scheme:dark}}
+body{{font:14px/1.45 system-ui,sans-serif;background:var(--bg);color:var(--fg);margin:0;padding-block:20px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}}
+h1{{margin:0 0 4px}} h2{{margin:28px 0 10px;font-size:17px}} h3{{margin:6px 0;font-size:15px;text-wrap:balance}}
+.muted{{color:var(--mut);font-size:12px}} code{{font-size:11px;background:var(--bd);padding:2px 5px;border-radius:4px;user-select:all;overflow-wrap:anywhere}}
+.grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(330px,100%),1fr));gap:12px}}
+.card,.ticket{{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px;min-width:0}}
 .card.busy{{border-left:4px solid var(--busy)}} .card.idle{{border-left:4px solid var(--idle)}}
-.top{{display:flex;gap:8px;align-items:center;justify-content:space-between}} .name{{font-weight:600;flex:1}}
-.badge{{font-size:11px;padding:1px 7px;border-radius:9px;background:var(--bd)}} .badge.busy{{background:var(--busy);color:#fff}} .badge.idle{{background:var(--idle);color:#fff}}
+.top{{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}} .name{{font-weight:600;flex:1}}
+.badge{{font-size:11px;padding:1px 7px;border-radius:9px;background:var(--bd)}} .badge.busy{{background:var(--busy);color:var(--on)}} .badge.idle{{background:var(--idle);color:var(--on)}}
 .skill{{display:inline-block;font-size:11px;border:1px solid var(--acc);color:var(--acc);border-radius:4px;padding:0 5px;margin:1px}}
-.last{{font-size:13px;margin:6px 0}} .key{{display:inline-block;font-size:11px;background:var(--acc);color:#fff;border-radius:4px;padding:0 5px;margin:1px}}
-table{{width:100%;border-collapse:collapse;background:var(--card)}} td{{border-top:1px solid var(--bd);padding:8px;vertical-align:top}}
-.nowrap{{white-space:nowrap}} details summary{{cursor:pointer;color:var(--mut);font-size:12px}} ol{{font-size:12px;max-height:320px;overflow:auto}}
+.last{{font-size:13px;margin:6px 0;overflow-wrap:anywhere}} .key{{display:inline-block;font-size:11px;background:var(--acc);color:var(--on);border-radius:4px;padding:0 5px;margin:1px}}
+.tbl{{overflow-x:auto}} table{{width:100%;border-collapse:collapse;background:var(--card)}} td{{border-top:1px solid var(--bd);padding:8px;vertical-align:top;overflow-wrap:anywhere}}
+.nowrap{{white-space:nowrap;font-variant-numeric:tabular-nums}} details summary{{cursor:pointer;color:var(--mut);font-size:12px}} ol{{font-size:12px;max-height:320px;overflow:auto}}
 pre{{white-space:pre-wrap;font-size:12px;max-height:300px;overflow:auto}} ul{{margin:6px 0;padding-left:18px;font-size:13px}}
-select{{font-size:14px;padding:6px;border:1px solid var(--bd);border-radius:6px;background:var(--card);color:var(--fg)}}
-input{{font-size:14px;padding:6px 10px;width:340px;border:1px solid var(--bd);border-radius:6px;background:var(--card);color:var(--fg)}}
+.bar{{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}}
+select{{font-size:14px;padding:6px;border:1px solid var(--bd);border-radius:6px;background:var(--card);color:var(--fg);max-width:100%}}
+input{{font-size:14px;padding:6px 10px;width:340px;max-width:100%;box-sizing:border-box;border:1px solid var(--bd);border-radius:6px;background:var(--card);color:var(--fg)}}
+input:focus-visible,select:focus-visible,summary:focus-visible,a:focus-visible{{outline:2px solid var(--acc);outline-offset:1px}}
 .task{{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px;margin-bottom:12px}} .task:target{{outline:2px solid var(--acc)}}
 .flow{{display:flex;gap:6px;align-items:stretch;flex-wrap:wrap}} .arrow{{align-self:center;color:var(--mut);font-size:18px}}
-.stage{{flex:1;min-width:230px;border:1px solid var(--bd);border-radius:8px;padding:8px;font-size:13px}} .stage.todo{{border-style:dashed;opacity:.6}}
+.stage{{flex:1;min-width:min(230px,100%);border:1px solid var(--bd);border-radius:8px;padding:8px;font-size:13px}} .stage.todo{{border-style:dashed;opacity:.6}}
 .stage.done{{border-top:3px solid var(--idle)}} .sh{{font-weight:600;margin-bottom:6px}} .file{{margin:4px 0}} .stage ul{{padding-left:16px}}
-.gone{{font-size:11px;color:#fff;background:#b33;border-radius:4px;padding:0 4px}} a.key{{text-decoration:none}}
+.gone{{font-size:11px;color:var(--on);background:var(--gone);border-radius:4px;padding:0 4px}} a.key{{text-decoration:none}}
 .tchip{{display:inline-block;font-size:11px;border:1px solid var(--idle);color:var(--idle);border-radius:4px;padding:0 5px;margin:1px;text-decoration:none}}
-a{{color:var(--acc)}} li{{margin:4px 0}} li.main code{{background:var(--acc);color:#fff}} tr:target{{outline:2px solid var(--acc)}}
-</style></head><body>
+a{{color:var(--acc)}} li{{margin:4px 0}} li.main code{{background:var(--acc);color:var(--on)}} tr:target{{outline:2px solid var(--acc)}}
+</style>
 <h1>Claude Code — sesje</h1><div class="muted">wygenerowano {fmt(time.time())} · {len(sessions)} sesji · {len(running)} uruchomionych</div>
 <h2>Teraz uruchomione ({len(running)})</h2><div class="grid">{''.join(cards) or '<span class="muted">brak</span>'}</div>
-<h2>Zadania: wykonalność → plan → implementacja ({len(groups)})</h2><input placeholder="filtr zadań: klucz, tytuł, plik…" oninput="f('.task',this.value)"><p></p>
-{render_tasks(groups, live_reload) or '<span class="muted">brak</span>'}
-<h2>Praca z pamięci ({len(cards_mem)})</h2><input id="tq" placeholder="filtr…" oninput="f('.ticket',this.value)"><p></p><div class="grid">{''.join(cards_mem)}</div>
-<h2>Wszystkie sesje</h2><input id="q" placeholder="szukaj: ticket, branch, tekst promptu…" oninput="fs()">
+<h2>Zadania: wykonalność → plan → implementacja ({len(groups)})</h2><div class="bar"><input id="taq" placeholder="filtr zadań: klucz, tytuł, plik…" oninput="f('.task',this.value)"></div>
+{render_tasks(groups) or '<span class="muted">brak</span>'}
+<h2>Praca z pamięci ({len(cards_mem)})</h2><div class="bar"><input id="tq" placeholder="filtr…" oninput="f('.ticket',this.value)"></div><div class="grid">{''.join(cards_mem)}</div>
+<h2>Wszystkie sesje</h2><div class="bar"><input id="q" placeholder="szukaj: ticket, branch, tekst promptu…" oninput="fs()">
 <select id="sk" onchange="fs()"><option value="">wszystkie skille</option>{''.join('<option value="%s">%s (%d)</option>' % (e(k), e(k), n) for k, n in sorted(skill_count.items()))}</select>
-<label class="muted"><input id="lo" type="checkbox" style="width:auto" onchange="fs()"> tylko uruchomione</label>
-<p></p><table><tbody>{''.join(rows)}</tbody></table>
-<script>{AUTO if live_reload else ''}function fs(){{const v=q.value.toLowerCase(),k=sk.value,l=lo.checked;document.querySelectorAll('tbody tr').forEach(r=>r.style.display=(r.dataset.q||'').includes(v)&&(!k||r.dataset.skills.split(' ').includes(k))&&!(l&&r.dataset.live=='0')?'':'none')}}function f(sel,v){{v=v.toLowerCase();document.querySelectorAll(sel).forEach(r=>r.style.display=(r.dataset.q||'').includes(v)?'':'none')}}</script>
-</body></html>"""
+<label class="muted"><input id="lo" type="checkbox" style="width:auto" onchange="fs()"> tylko uruchomione</label></div>
+<div class="tbl"><table><tbody>{''.join(rows)}</tbody></table></div>
+<script>function fs(){{const v=q.value.toLowerCase(),k=sk.value,l=lo.checked;document.querySelectorAll('tbody tr').forEach(r=>r.hidden=!((r.dataset.q||'').includes(v)&&(!k||r.dataset.skills.split(' ').includes(k))&&!(l&&r.dataset.live=='0')))}}function f(sel,v){{v=v.toLowerCase();document.querySelectorAll(sel).forEach(r=>r.hidden=!(r.dataset.q||'').includes(v))}}</script>"""
     stats = "tasks=%d sessions=%d running=%d memory=%d linked=%d" % (len(groups), len(sessions), len(running), len(cards_mem), sum(os.path.basename(m["file"]) in touched for m in mems))
     return page, stats
-
-
-# serve mode: reload every 30s unless user is searching or has something expanded
-AUTO = ("setInterval(()=>{if(document.hidden||[...document.querySelectorAll('input:not([type=checkbox]),select')].some(i=>i.value)||lo.checked"
-        "||document.querySelector('details[open]'))return;location.reload()},30000);")
-
-
-def serve(host, port):
-    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-
-    class H(BaseHTTPRequestHandler):
-        def do_GET(self):
-            from urllib.parse import parse_qs, urlsplit
-            u = urlsplit(self.path)
-            if u.path == "/f":  # preview of a skill artifact; only paths listed on the dashboard
-                p = (parse_qs(u.query).get("p") or [""])[0]
-                if p not in ALLOWED or not os.path.isfile(p):
-                    self.send_error(404)
-                    return
-                body = open(p, "rb").read()
-                self.send_response(200)
-                self.send_header("Content-Type", ("text/html" if p.endswith(".html") else "text/plain") + "; charset=utf-8")
-                self.send_header("Content-Length", str(len(body)))
-                self.end_headers()
-                self.wfile.write(body)
-                return
-            if u.path not in ("/", "/index.html"):
-                self.send_error(404)
-                return
-            body = render(live_reload=True)[0].encode()
-            self.send_response(200)
-            self.send_header("Content-Type", "text/html; charset=utf-8")
-            self.send_header("Content-Length", str(len(body)))
-            self.end_headers()
-            self.wfile.write(body)
-
-        def log_message(self, *a):
-            pass
-
-    print("serving http://%s:%d" % (host, port), flush=True)
-    ThreadingHTTPServer((host, port), H).serve_forever()
 
 
 def main():
     import argparse
     ap = argparse.ArgumentParser()
     ap.add_argument("out", nargs="?", default=DEFAULT_OUT)
-    ap.add_argument("--serve", action="store_true", help="run HTTP server, page regenerated on every request")
-    ap.add_argument("--host", default=os.environ.get("DASH_HOST", "127.0.0.1"))
-    ap.add_argument("--port", type=int, default=int(os.environ.get("DASH_PORT", "8765")))
     a = ap.parse_args()
-    if a.serve:
-        serve(a.host, a.port)
-        return
     page, stats = render()
     os.makedirs(os.path.dirname(a.out), exist_ok=True)
     open(a.out, "w").write(page)
     print(a.out)
     print(stats)
+    print("artifact_url=" + (open(URL_FILE).read().strip() if os.path.isfile(URL_FILE) else ""))
 
 
 if __name__ == "__main__":
