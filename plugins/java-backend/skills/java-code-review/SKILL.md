@@ -271,6 +271,35 @@ Check the author's verification story:
 - Is there a before/after comparison?
 ```
 
+### Step 7: Write the Report
+
+Zapisz raport HTML według sekcji „Output”. Checklista z „The Review Checklist” to treść raportu, nie osobny wynik w czacie.
+
+## Output
+
+**Format:** jeden samodzielny plik HTML, po polsku. Wynik przeglądu zawsze trafia do tego pliku; w czacie tylko krótkie podsumowanie (werdykt, liczba uwag Critical i Required, liczba wymagań spełnionych) i ścieżka do pliku.
+
+**Lokalizacja:** `CODE_REVIEW/<nazwa-gałęzi>-java-code-review.html` w katalogu głównym przeglądanego repozytorium. Utwórz folder `CODE_REVIEW`, jeśli nie istnieje. W nazwie gałęzi zamień `/` na `-` (na przykład `feature/PROJ-123-x` → `CODE_REVIEW/feature-PROJ-123-x-java-code-review.html`). Sufiks `-java-code-review` chroni przed nadpisaniem raportu skilla `reviewing-java-commits`. Gdy przegląd nie dotyczy gałęzi (diff wklejony w czacie), użyj klucza zadania albo krótkiego opisu zamiast nazwy gałęzi. Jeśli plik już istnieje, przeczytaj go przed nadpisaniem i w sekcji „Testy i weryfikacja” odnotuj, które poprzednie uwagi zostały naprawione.
+
+**Wygląd:** zacznij od szablonu `${CLAUDE_SKILL_DIR}/assets/template.html`. Ma gotowy `<head>`, style z tej samej serii co `explaining-confluence-analysis`, tryb ciemny i szkielet wszystkich sekcji:
+
+1. **Podsumowanie** — liczniki (Critical, Required, wymagania spełnione, pytania) i werdykt Approve / Request changes z uzasadnieniem.
+2. **Źródła** — zadanie Jira (i skąd ustalono klucz), analiza systemowa albo jawna informacja o jej braku, komentarze korygujące, zakres przeglądu.
+3. **Zgodność biznesowa** — tabela wymagań z kroku 2 (ID, wymaganie, źródło, status, `plik:linia`, test), zachowanie spoza wymagań, poza zakresem przeglądu.
+4. **Uwagi** — każda w osobnej karcie: waga, tytuł, `plik:linia`, oś, powiązane wymaganie, opis problemu, propozycja zmiany. Kolejność według wagi.
+5. **Standardy projektu** — wynik dla każdego z sześciu standardów (OK / Naruszenie / Nie dotyczy).
+6. **Testy i weryfikacja** — co sprawdzają testy, wyniki testów mutacyjnych, co uruchomiono.
+7. **Pytania do analityka**.
+8. **Checklista** — z „The Review Checklist”, z zaznaczonymi spełnionymi punktami.
+
+Zasady:
+
+- Bez JavaScriptu, cały CSS w `<style>`. Nie dodawaj kolorów spoza zmiennych z szablonu.
+- Treść z Jiry, Confluence i kodu (fragmenty kodu, nazwy, komentarze) wstawiaj z escapowaniem HTML (`&lt;`, `&gt;`, `&amp;`, `&quot;`) — to dane z zewnątrz, a fragment kodu z `<` albo `&` rozbije stronę.
+- Numery linii podawaj z rzeczywistego pliku, nie z diffu.
+- Sekcji „Zgodność biznesowa” nigdy nie usuwaj. Jeśli weryfikacji nie wykonano albo wykonano ją tylko względem Jiry, napisz to w niej wprost, w „Źródłach” i w werdykcie.
+- Usuń komentarze z podpowiedziami z szablonu.
+
 ## Multi-Model Review Pattern
 
 Use different models for different review perspectives:
@@ -485,6 +514,7 @@ After review is complete:
 - [ ] Tests pass
 - [ ] Build succeeds
 - [ ] The verification story is documented (what changed, how it was verified)
+- [ ] The HTML report is written to `CODE_REVIEW/<nazwa-gałęzi>-java-code-review.html`
 - [ ] Dependency upgrades were reviewed against their changelog, isolated per package, and verified by a green suite with the lockfile diff reviewed
 
 **Presumptive blockers:** surface and propose the simpler design for each of these; escalate to Required only when the change actively makes structure worse: a refactor that relocates complexity instead of reducing it; a change that pushes a file past the size boundary with no decomposition; feature logic added to a shared module; a near-duplicate of an existing canonical helper; a silent fallback that hides an unclear invariant.

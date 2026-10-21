@@ -1,0 +1,323 @@
+<!doctype html>
+<!--
+  Szkielet raportu java-code-review.
+  Skopiuj ten plik, zamień zawartość sekcji i usuń komentarze z podpowiedziami.
+  Zasady: jeden samodzielny plik, bez JavaScriptu, cały CSS w <style>, treść po polsku z polskimi znakami.
+  Wszystkie dane z Jiry, Confluence i kodu wstawiaj z escapowaniem HTML (&lt; &gt; &amp; &quot;).
+  Sekcję, która nie ma treści, zostaw z jednym zdaniem "Brak uwag." - nie usuwaj sekcji zgodności biznesowej,
+  nawet gdy weryfikacji nie wykonano: wtedy wpisz w niej wprost, dlaczego.
+-->
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Code review — GAŁĄŹ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>, treść po polsku z polskimi znakami.
+  Każdą sekcję, której analiza nie dotyczy, usuń razem z wpisem w spisie treści - nie zostawiaj pustych nagłówków.
+-->
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OPERACJA wersja — wyjaśnienie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f7f7f5; --panel:#fff; --ink:#1d2330; --muted:#6b7280; --line:#e4e4df;
+  --accent:#2f5bd3; --accent-soft:#e9effc; --code-bg:#f3f3ef;
+  --ok:#15803d; --ok-soft:#e7f6ec;
+  --warn:#b45309; --warn-soft:#fdf3e1;
+  --bad:#b91c1c; --bad-soft:#fdeaea;
+  --reg:#7c3aed; --reg-soft:#f1ebfd;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#14161b; --panel:#1b1e25; --ink:#e6e7ea; --muted:#9aa1ad; --line:#2b2f38;
+    --accent:#7aa2ff; --accent-soft:#1f2a44; --code-bg:#111318;
+    --ok:#5fd38a; --ok-soft:#16281d;
+    --warn:#f2b45a; --warn-soft:#2c2414;
+    --bad:#ff8a8a; --bad-soft:#2e1717;
+    --reg:#b69bff; --reg-soft:#241d36;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14161b; --panel:#1b1e25; --ink:#e6e7ea; --muted:#9aa1ad; --line:#2b2f38;
+  --accent:#7aa2ff; --accent-soft:#1f2a44; --code-bg:#111318;
+  --ok:#5fd38a; --ok-soft:#16281d;
+  --warn:#f2b45a; --warn-soft:#2c2414;
+  --bad:#ff8a8a; --bad-soft:#2e1717;
+  --reg:#b69bff; --reg-soft:#241d36;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-size:16px; line-height:1.65;
+}
+code,pre,.mono{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.86em}
+code{background:var(--code-bg);border:1px solid var(--line);border-radius:5px;padding:.1em .35em;white-space:nowrap}
+pre{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto}
+pre code{background:none;border:0;padding:0;white-space:pre}
+a{color:var(--accent);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--accent) 35%,transparent)}
+a:hover{border-bottom-color:var(--accent)}
+
+/* --- układ --- */
+.wrap{max-width:1300px;margin:0 auto;padding:0 16px 80px}
+.layout{display:grid;grid-template-columns:250px minmax(0,980px);gap:40px;align-items:start}
+.main{min-width:0}
+
+/* --- spis tresci --- */
+.toc{position:sticky;top:24px;font-size:.9rem}
+.toc .toc-title{font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 10px}
+.toc ol{list-style:none;margin:0;padding:0;border-left:2px solid var(--line)}
+.toc li{margin:0}
+.toc a{display:block;padding:5px 12px;color:var(--muted);border:0;border-left:2px solid transparent;margin-left:-2px}
+.toc a:hover{color:var(--ink);border-left-color:var(--accent);background:var(--accent-soft)}
+
+/* --- hero --- */
+.hero{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:28px 30px;margin:32px 0 36px}
+.hero .eyebrow{font-size:.75rem;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);font-weight:600;margin:0 0 10px}
+.hero h1{margin:0 0 12px;font-size:1.95rem;line-height:1.2;letter-spacing:-.02em}
+.hero .lead{margin:0;color:var(--muted);max-width:68ch}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.tag{font-size:.78rem;font-weight:500;padding:3px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 22%,transparent)}
+.tag.plain{background:var(--code-bg);color:var(--muted);border-color:var(--line)}
+
+/* --- naglowki sekcji --- */
+section{margin:0 0 44px;scroll-margin-top:24px}
+h2{font-size:1.3rem;letter-spacing:-.01em;margin:0 0 6px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+h2 .n{color:var(--muted);font-weight:500;margin-right:.45em}
+h3{font-size:1.02rem;margin:26px 0 8px}
+p,ul,ol{margin:0 0 14px}
+
+/* --- ramki --- */
+.callout{border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--panel);border-radius:0 12px 12px 0;padding:16px 20px;margin:0 0 18px}
+.callout > :last-child{margin-bottom:0}
+.callout .label{display:block;font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--accent);margin-bottom:6px}
+.callout.ok{border-left-color:var(--ok);background:var(--ok-soft)}
+.callout.ok .label{color:var(--ok)}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.callout.warn .label{color:var(--warn)}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.callout.bad .label{color:var(--bad)}
+
+/* --- karty --- */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:0 0 14px}
+.card > :last-child{margin-bottom:0}
+.card .card-title{font-weight:600;margin:0 0 6px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:0 0 16px}
+.grid2 .card{margin:0}
+
+/* --- odznaka reguly --- */
+.reg{display:inline-block;font-family:"JetBrains Mono",monospace;font-size:.72rem;font-weight:500;padding:2px 7px;border-radius:5px;background:var(--reg-soft);color:var(--reg);border:1px solid color-mix(in srgb,var(--reg) 25%,transparent);white-space:nowrap;vertical-align:.08em}
+
+/* --- kroki --- */
+.flow{list-style:none;margin:0 0 18px;padding:0}
+.step{display:grid;grid-template-columns:34px minmax(0,1fr);gap:14px;margin:0 0 12px}
+/* kolor cyfry to tlo strony - czytelny i w jasnym, i w ciemnym trybie */
+.num{width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--bg);display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:600;margin-top:4px}
+.step .card{margin:0}
+
+/* --- os czasu --- */
+.timeline{list-style:none;margin:0 0 18px;padding:0 0 0 22px;border-left:2px solid var(--line)}
+.doc{position:relative;margin:0 0 16px;padding-left:4px}
+.doc::before{content:"";position:absolute;left:-29px;top:9px;width:11px;height:11px;border-radius:50%;background:var(--panel);border:2px solid var(--accent)}
+.doc .when{font-family:"JetBrains Mono",monospace;font-size:.78rem;color:var(--muted);display:block}
+
+/* --- checklista --- */
+ul.check{list-style:none;margin:0 0 16px;padding:0}
+ul.check li{padding:4px 0 4px 26px;position:relative}
+ul.check li::before{content:"\2610";position:absolute;left:0;top:3px;color:var(--muted);font-size:1.05em}
+ul.check li.done::before{content:"\2611";color:var(--ok)}
+
+/* --- tabele --- */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel);margin:0 0 18px}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{text-align:left;padding:9px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--code-bg);font-weight:600;font-size:.8rem;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+td.nowrap{white-space:nowrap}
+
+footer{color:var(--muted);font-size:.85rem;border-top:1px solid var(--line);padding-top:16px}
+
+@media (max-width:860px){
+  .layout{grid-template-columns:minmax(0,1fr);gap:0}
+  .toc{position:static;margin:0 0 28px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .grid2{grid-template-columns:minmax(0,1fr)}
+  .hero{padding:22px 20px}
+  .hero h1{font-size:1.5rem}
+}
+
+/* --- statusy i wagi (review) --- */
+.badge{display:inline-block;font-size:.74rem;font-weight:600;padding:2px 9px;border-radius:999px;border:1px solid var(--line);background:var(--code-bg);color:var(--muted);white-space:nowrap}
+.badge.ok{background:var(--ok-soft);color:var(--ok);border-color:color-mix(in srgb,var(--ok) 30%,transparent)}
+.badge.warn{background:var(--warn-soft);color:var(--warn);border-color:color-mix(in srgb,var(--warn) 30%,transparent)}
+.badge.bad{background:var(--bad-soft);color:var(--bad);border-color:color-mix(in srgb,var(--bad) 30%,transparent)}
+.badge.info{background:var(--accent-soft);color:var(--accent);border-color:color-mix(in srgb,var(--accent) 30%,transparent)}
+.finding .card-title{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline}
+.finding .where{font-family:"JetBrains Mono",monospace;font-size:.82rem;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0 0 18px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.stat .v{font-size:1.5rem;font-weight:700;line-height:1.2}
+.stat .k{font-size:.78rem;color:var(--muted)}
+@media (max-width:860px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <p class="eyebrow">Code review · RRRR-MM-DD · gałąź → gałąź docelowa</p>
+  <h1>PROJ-000 — tytuł zadania lub zmiany</h1>
+  <p class="lead">Jedno, dwa zdania: co zmiana robi i jaki jest werdykt.</p>
+  <div class="tags">
+    <span class="badge bad">Request changes</span><!-- albo: <span class="badge ok">Approve</span> -->
+    <span class="tag">PROJ-000</span>
+    <span class="tag plain">nazwa-repozytorium</span>
+    <span class="tag plain">12 plików · +340 / −80</span>
+  </div>
+</header>
+
+<div class="layout">
+
+  <nav class="toc">
+    <p class="toc-title">Spis treści</p>
+    <ol>
+      <li><a href="#podsumowanie">Podsumowanie</a></li>
+      <li><a href="#zrodla">Źródła</a></li>
+      <li><a href="#biznes">Zgodność biznesowa</a></li>
+      <li><a href="#uwagi">Uwagi</a></li>
+      <li><a href="#standardy">Standardy projektu</a></li>
+      <li><a href="#testy">Testy i weryfikacja</a></li>
+      <li><a href="#pytania">Pytania do analityka</a></li>
+      <li><a href="#checklista">Checklista</a></li>
+    </ol>
+  </nav>
+
+  <main class="main">
+
+    <section id="podsumowanie">
+      <h2><span class="n">1.</span>Podsumowanie</h2>
+      <div class="stats">
+        <div class="stat"><div class="v">0</div><div class="k">Critical</div></div>
+        <div class="stat"><div class="v">0</div><div class="k">Required</div></div>
+        <div class="stat"><div class="v">0 / 0</div><div class="k">wymagań spełnionych</div></div>
+        <div class="stat"><div class="v">0</div><div class="k">pytań do analityka</div></div>
+      </div>
+      <div class="callout bad"><!-- ok = Approve, bad = Request changes -->
+        <span class="label">Werdykt: Request changes</span>
+        <p>Dwa, trzy zdania uzasadnienia: najważniejsze blokery albo dlaczego zmiana jest gotowa.</p>
+      </div>
+    </section>
+
+    <section id="zrodla">
+      <h2><span class="n">2.</span>Źródła</h2>
+      <ul>
+        <li>Zadanie Jira: <a href="LINK">PROJ-000</a> — klucz ustalony z: użytkownik / gałąź / PR / commit</li>
+        <li>Analiza systemowa: <a href="LINK">tytuł strony</a>, wersja X<!-- albo: brak — weryfikacja tylko względem Jiry / weryfikacji biznesowej nie wykonano --></li>
+        <li>Uwzględnione komentarze korygujące: autor, data, czego dotyczy</li>
+        <li>Zakres przeglądu: gałąź <code>feature/x</code> względem <code>main</code> (merge-base <code>abc1234</code>)</li>
+      </ul>
+    </section>
+
+    <section id="biznes">
+      <h2><span class="n">3.</span>Zgodność biznesowa</h2>
+      <!-- Statusy: badge ok = Spełnione, warn = Częściowo, bad = Brak / Niezgodne, plain (bez klasy) = Nie do ustalenia -->
+      <div class="tablewrap"><table>
+        <thead><tr><th>ID</th><th>Wymaganie</th><th>Źródło</th><th>Status</th><th>Kod</th><th>Test</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="nowrap"><span class="reg">REG-1</span></td>
+            <td>Opis wymagania jednym zdaniem.</td>
+            <td>analiza §3.2</td>
+            <td><span class="badge ok">Spełnione</span></td>
+            <td><code>Plik.java:42</code></td>
+            <td><code>PlikTest#metoda</code></td>
+          </tr>
+          <tr>
+            <td class="nowrap"><span class="reg">REG-2</span></td>
+            <td>Opis wymagania.</td>
+            <td>komentarz, autor, data</td>
+            <td><span class="badge bad">Niezgodne</span></td>
+            <td><code>Plik.java:88</code></td>
+            <td>brak</td>
+          </tr>
+        </tbody>
+      </table></div>
+      <h3>Zachowanie spoza wymagań</h3>
+      <p>Brak uwag.</p>
+      <h3>Poza zakresem przeglądu</h3>
+      <p>Na przykład część frontendowa zadania.</p>
+    </section>
+
+    <section id="uwagi">
+      <h2><span class="n">4.</span>Uwagi</h2>
+      <!-- Kolejność: Critical, Required, Consider/Optional, Nit, FYI. Klasa badge: bad = Critical, warn = Required, info = Consider/Optional, bez klasy = Nit/FYI -->
+      <div class="card finding">
+        <p class="card-title"><span class="badge bad">Critical</span> 1. Krótki, konkretny tytuł <span class="where">Plik.java:88</span></p>
+        <p><strong>Oś:</strong> zgodność biznesowa · <strong>Wymaganie:</strong> <span class="reg">REG-2</span></p>
+        <p>Co jest nie tak i dlaczego to problem.</p>
+        <pre><code>// fragment kodu, jeśli pomaga</code></pre>
+        <p><strong>Propozycja:</strong> konkretna zmiana.</p>
+      </div>
+    </section>
+
+    <section id="standardy">
+      <h2><span class="n">5.</span>Standardy projektu</h2>
+      <div class="tablewrap"><table>
+        <thead><tr><th>#</th><th>Standard</th><th>Wynik</th><th>Uwagi</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Package by feature</td><td><span class="badge ok">OK</span></td><td>—</td></tr>
+          <tr><td>2</td><td>jOOQ dla odczytów</td><td><span class="badge ok">OK</span></td><td>—</td></tr>
+          <tr><td>3</td><td>JPA/Hibernate dla zapisów</td><td><span class="badge ok">OK</span></td><td>—</td></tr>
+          <tr><td>4</td><td>Mapowanie przez MapStruct</td><td><span class="badge ok">OK</span></td><td>—</td></tr>
+          <tr><td>5</td><td>Brak zbędnych interfejsów</td><td><span class="badge ok">OK</span></td><td>—</td></tr>
+          <tr><td>6</td><td>Konwencje changesetów Liquibase</td><td><span class="badge">Nie dotyczy</span></td><td>—</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="testy">
+      <h2><span class="n">6.</span>Testy i weryfikacja</h2>
+      <p>Jakie testy istnieją, czy weryfikują reguły, wyniki testów mutacyjnych (który warunek odwrócono, czy testy to wykryły), co uruchomiono, a czego nie.</p>
+    </section>
+
+    <section id="pytania">
+      <h2><span class="n">7.</span>Pytania do analityka</h2>
+      <div class="callout warn">
+        <span class="label">Do wyjaśnienia</span>
+        <ol><li>Pytanie z cytatem z analizy i odnośnikiem do fragmentu.</li></ol>
+      </div>
+    </section>
+
+    <section id="checklista">
+      <h2><span class="n">8.</span>Checklista</h2>
+      <!-- li.done = spełnione -->
+      <ul class="check">
+        <li class="done">Rozumiem, co zmiana robi i po co</li>
+        <li>Każde wymaganie zrealizowane i zgodne z analizą</li>
+        <li>Brak zachowania spoza wymagań (albo wyjaśnione)</li>
+        <li>Każde wymaganie pokryte testem weryfikującym regułę</li>
+        <li>Przypadki brzegowe i ścieżki błędów obsłużone</li>
+        <li>Kod czytelny, bez zbędnej złożoności</li>
+        <li>Zgodny z architekturą i standardami projektu</li>
+        <li>Brak problemów bezpieczeństwa (walidacja, autoryzacja, sekrety, wstrzyknięcia)</li>
+        <li>Brak problemów wydajności (N+1, brak limitów, brak paginacji)</li>
+        <li>Testy przechodzą, build przechodzi</li>
+      </ul>
+    </section>
+
+    <footer>Wygenerowano skillem <code>java-code-review</code>. Źródłem prawdy o wymaganiach jest analiza systemowa w Confluence.</footer>
+
+  </main>
+</div>
+</div>
+</body>
+</html>

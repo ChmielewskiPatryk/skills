@@ -1,6 +1,6 @@
 ---
 name: planning-jira-implementation
-description: Use when asked to turn a Jira ticket/issue into a backend implementation plan, or to plan how a Jira issue should be implemented before writing code. This team implements backend only, using jOOQ/Hibernate and a package-by-feature structure, and treats the ticket's linked system-analysis document (usually Confluence) as the source of truth, not the ticket description alone. The plan includes a requirements-to-tests matrix: every business rule (REG) and acceptance criterion gets an ID, a source line and a test planned before the code.
+description: "Use when asked to turn a Jira ticket/issue into a backend implementation plan, or to plan how a Jira issue should be implemented before writing code. This team implements backend only, using jOOQ/Hibernate and a package-by-feature structure, and treats the ticket's linked system-analysis document (usually Confluence) as the source of truth, not the ticket description alone. The plan includes a requirements-to-tests matrix: every business rule (REG) and acceptance criterion gets an ID, a source line and a test planned before the code."
 disable-model-invocation: false
 ---
 
