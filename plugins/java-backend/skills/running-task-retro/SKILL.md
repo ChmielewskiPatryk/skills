@@ -26,6 +26,7 @@ Zbierz wszystko, co istnieje — brak pojedynczego źródła nie blokuje retrosp
 | Źródło | Gdzie | Co z niego bierzesz |
 |---|---|---|
 | Plan implementacji | `IMPLEMENTATION_PLAN/IMPLEMENTATION_PLAN_<KLUCZ>.md` w repozytorium wiodącym (sprawdź też repozytoria sąsiednie) | Kroki, macierz wymagań i testów, „Rozstrzygnięte pytania”, „Otwarte pytania do analityka”, „Poza zakresem” |
+| Dziennik implementacji | `IMPLEMENTATION_LOG/<KLUCZ>.md` w repozytorium wiodącym (pisze go `implementing-jira-task`) | Status kroków (zrobiony, pominięty, zablokowany), commity na krok, „Odstępstwa od planu” z przyczynami, „Pytania” zadane w trakcie implementacji z odpowiedziami, stan macierzy, „Pliki spoza kroków planu” |
 | Lokalna kopia analizy | `IMPLEMENTATION_PLAN/.analiza/<KLUCZ>-analiza.md` | Treść wymagań do porównania; jeżeli analiza w Confluence zmieniła się od pobrania kopii, to osobne ustalenie |
 | Analiza wykonalności | `ANALIZA_WYKONALNOSCI/<KLUCZ>.md` albo plik nazwany tytułem strony | Pytania do analityka i to, czy dostały odpowiedź |
 | Finalny kod | gałąź zadania w każdym repozytorium (albo commit scalenia, jeżeli pull request jest już scalony) | Diff względem punktu rozejścia z gałęzią bazową |
@@ -41,7 +42,7 @@ Dostęp do Jiry, Confluence i Bitbucketa ustalaj tak samo jak w pozostałych ski
 
 1. **Ustal klucz zadania** i znajdź repozytoria, w których jest gałąź z tym kluczem (`git -C <repo> branch -a --list "*<KLUCZ>*"`). Jeżeli gałęzi już nie ma (usunięta po scaleniu), znajdź commity zadania w gałęzi bazowej po kluczu w komunikatach (`git -C <repo> log --oneline --grep=<KLUCZ> <bazowa>`).
 2. **Zbierz źródła** z tabeli powyżej. Dla każdego zapisz, czy zostało znalezione.
-3. **Plan a kod.** Dla każdego kroku planu ustal, czy został zrealizowany: znajdź odpowiadające mu zmiany w diffie (repozytorium, pliki, klasy). Następnie przejdź diff w drugą stronę i wypisz zmiany, które nie należą do żadnego kroku planu. Każdą rozbieżność zaklasyfikuj:
+3. **Plan a kod.** Dla każdego kroku planu ustal, czy został zrealizowany: znajdź odpowiadające mu zmiany w diffie (repozytorium, pliki, klasy). Jeżeli jest dziennik implementacji, zacznij od jego tabeli kroków i sekcji „Odstępstwa od planu” — to gotowa klasyfikacja z przyczynami — i sprawdź ją diffem, zamiast odtwarzać od zera; rozbieżność między dziennikiem a diffem to osobne ustalenie. Następnie przejdź diff w drugą stronę i wypisz zmiany, które nie należą do żadnego kroku planu. Każdą rozbieżność zaklasyfikuj:
    - **zmiana spoza planu, wymuszona** — bez niej zadanie nie działało (brakujący krok, nieprzewidziana migracja, poprawka w innym repozytorium);
    - **zmiana spoza planu, z review** — dodana w odpowiedzi na uwagę z raportu review albo z komentarza w pull requeście;
    - **zmiana wymagań** — wynika z komentarza analityka lub zmiany analizy po zapisaniu planu;
@@ -53,7 +54,7 @@ Dostęp do Jiry, Confluence i Bitbucketa ustalaj tak samo jak w pozostałych ski
    - uwaga z checklisty A (standardy projektu) → czy plan wskazywał miejsce w kodzie i konwencję;
    - uwaga z checklisty B (jakość, bezpieczeństwo) → czy to błąd implementacji, czy luka w planie (na przykład brak kroku autoryzacji);
    - uwaga, która wróciła jako „nienaprawiona” albo „naprawiona częściowo” w trybie przyrostowym → osobno, bo to koszt kolejnej rundy.
-6. **Pytania.** Zestaw wszystkie pytania: z raportu wykonalności, „Rozstrzygnięte pytania” i „Otwarte pytania do analityka” z planu, pytania z review („Pytania i luki w analizie”). Ustal dla każdego: kiedy zostało zadane (wykonalność, planowanie, implementacja, review), czy mogło zostać zadane wcześniej (na przykład pytanie zadane dopiero w review, a sformułowanie analizy było niejasne już w momencie planowania), czy dostało odpowiedź i od kogo.
+6. **Pytania.** Zestaw wszystkie pytania: z raportu wykonalności, „Rozstrzygnięte pytania” i „Otwarte pytania do analityka” z planu, „Pytania” z dziennika implementacji, pytania z review („Pytania i luki w analizie”). Ustal dla każdego: kiedy zostało zadane (wykonalność, planowanie, implementacja, review), czy mogło zostać zadane wcześniej (na przykład pytanie zadane dopiero w review, a sformułowanie analizy było niejasne już w momencie planowania), czy dostało odpowiedź i od kogo.
 7. **Smoke test.** Jeżeli raport istnieje, wypisz niezgodności żądań, endpointy pominięte albo bez oczekiwanego wyniku i repozytoria „zaplanowane, ale niezmienione”, i powiąż je z krokami planu.
 8. **Wnioski.** Z ustaleń z kroków 3–7 wybierz te, które mają wspólną przyczynę leżącą w procesie, a nie w jednorazowym błędzie. Dla każdego wniosku wskaż etap i skill, który powinien był to wychwycić. Jednorazowe pomyłki implementacyjne wypisz, ale nie twórz z nich propozycji zmian w skillach.
 9. **Propozycje zmian w skillach.** Dla każdego wniosku z kroku 8, który da się przełożyć na instrukcję, przeczytaj aktualną treść odpowiedniego skilla (`${CLAUDE_SKILL_DIR}/../<skill>/SKILL.md`) i przygotuj konkretną zmianę: nowy punkt w „Częstych błędach”, nowy wiersz w tabeli „Kiedy zapytać”, nowa pozycja checklisty, doprecyzowanie kroku procesu. Zmiana ma być w stylu i języku zmienianej sekcji, minimalna i uzasadniona przypadkiem z tego zadania. Zapisz wszystkie zmiany jako jeden plik w formacie unified diff, ze ścieżkami względnymi od katalogu głównego repozytorium skilli (`plugins/java-backend/skills/<skill>/SKILL.md`), żeby dało się go nałożyć przez `git apply` w tym repozytorium. Sprawdź, czy kontekst każdego hunka dokładnie odpowiada aktualnej treści pliku.
@@ -65,6 +66,7 @@ Dostęp do Jiry, Confluence i Bitbucketa ustalaj tak samo jak w pozostałych ski
 | Sytuacja | Reakcja |
 |---|---|
 | Nie ma planu implementacji | Nie pytaj — zrób retrospektywę z tego, co jest (kod, review, pytania), i zaznacz w raporcie, że porównania z planem nie było. |
+| Nie ma dziennika implementacji | Nie pytaj — klasyfikuj rozbieżności z diffu i commitów; zaznacz w raporcie. |
 | Nie ma żadnego raportu review ani komentarzy w pull requestach | Nie pytaj — zaznacz w raporcie. |
 | Nie wiadomo, czy pominięty krok został pominięty świadomie | Zapytaj, z cytatem kroku i hipotezą (na przykład „przeniesiony do osobnego zadania”). Zbierz takie pytania w jedno. |
 | Zmiana spoza planu nie ma oczywistej przyczyny w commitach, review ani komentarzach | Zapytaj zbiorczo, razem z pytaniami o pominięte kroki. |
@@ -84,7 +86,7 @@ Dostęp do Jiry, Confluence i Bitbucketa ustalaj tak samo jak w pozostałych ski
 
 Data: <data>
 Repozytoria: <nazwa (gałąź, zakres commitów)>, ...
-Źródła: plan — <jest/brak>; analiza wykonalności — <jest/brak>; raporty review — <liczba, rundy>; komentarze w pull requestach — <sprawdzone/niedostępne>; smoke test — <jest/brak>
+Źródła: plan — <jest/brak>; dziennik implementacji — <jest/brak>; analiza wykonalności — <jest/brak>; raporty review — <liczba, rundy>; komentarze w pull requestach — <sprawdzone/niedostępne>; smoke test — <jest/brak>
 
 ## Liczby
 
@@ -95,6 +97,7 @@ Repozytoria: <nazwa (gałąź, zakres commitów)>, ...
 | Wiersze macierzy pokryte testem / bez testu / dodane w trakcie | <x> / <y> / <z> |
 | Rundy review | <N> |
 | Pytania zadane w: wykonalności / planowaniu / implementacji / review | <a> / <b> / <c> / <d> |
+| Odstępstwa zapisane w dzienniku / znalezione dopiero w diffie | <n> / <m> |
 
 ## Plan a kod
 
