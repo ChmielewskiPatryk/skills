@@ -1,6 +1,6 @@
 ---
 name: implementing-jira-task
-description: "Use when asked to implement a Jira task that already has an implementation plan — \"zaimplementuj PROJ-123\", \"zrób krok 3 z planu\", \"kontynuuj implementację\". Executes `IMPLEMENTATION_PLAN/IMPLEMENTATION_PLAN_<KLUCZ>.md` step by step in the repositories it names: task branch, tests from the requirements-to-tests matrix written and failing before the code, code written to this team's standards (package-by-feature, jOOQ for reads, JPA/Hibernate for writes, MapStruct, no needless interfaces, Liquibase changeset conventions), green module tests and one commit per step. Keeps a Polish-language log in `IMPLEMENTATION_LOG/<KLUCZ>.md` (step status, commits, deviations from the plan, questions and answers) so a later session can resume and the retro can compare plan with reality. Stops and asks when the plan does not match the code. Never pushes, never opens a pull request. Without a plan it points to planning-jira-implementation instead of coding from the ticket."
+description: "Use when asked to implement a Jira task that already has an implementation plan — \"zaimplementuj PROJ-123\", \"zrób krok 3 z planu\", \"kontynuuj implementację\". Executes `IMPLEMENTATION_PLAN/IMPLEMENTATION_PLAN_<KLUCZ>.md` step by step in the repositories it names: task branch, tests from the requirements-to-tests matrix written and failing before the code, code written to this team's standards (package-by-feature, jOOQ for reads, JPA/Hibernate for writes, MapStruct, no needless interfaces, Liquibase changeset conventions), green module tests and one commit per step, then a verification loop (up to 5 iterations, fresh subagent each time) that compares the finished code with the analysis and asks the user when a fixed discrepancy comes back. Keeps a Polish-language log in `IMPLEMENTATION_LOG/<KLUCZ>.md` (step status, commits, deviations from the plan, questions and answers) so a later session can resume and the retro can compare plan with reality. Stops and asks when the plan does not match the code. Never pushes, never opens a pull request. Without a plan it points to planning-jira-implementation instead of coding from the ticket."
 disable-model-invocation: true
 argument-hint: "[KLUCZ-ZADANIA] [numer-kroku]"
 ---
@@ -52,7 +52,13 @@ The skill writes code and commits on the task branch. It never pushes, never ope
    7. **Zacommituj krok** (`git add` tylko plików zmienionych w kroku, dziennik osobno w kroku 8). Komunikat według konwencji z `git log` repozytorium; gdy jej nie widać: pierwsza linia `<KLUCZ> <tryb rozkazujący, co zmienia>` (na przykład `PROJ-123 Add payment schedule validation`), w treści numer kroku planu i identyfikatory wierszy macierzy, które krok realizuje. Jeden krok to jeden commit; krok w dwóch repozytoriach to dwa commity o tej samej treści.
    8. **Zapisz postęp w dzienniku** po każdym kroku, nie na końcu — sesja może się urwać.
 7. **Po ostatnim kroku** uruchom pełne budowanie z testami w każdym zmienionym repozytorium (zadanie z CI, a gdy go nie ma — `./gradlew check`), i przejdź macierz wiersz po wierszu: każdy wiersz ma zielony test w kodzie albo uzasadnienie „brak testu” z planu. Wiersz bez jednego i drugiego to niezamknięty krok — wróć do niego. Wypisz w dzienniku pliki zmienione w zadaniu, które nie należą do żadnego kroku planu (powinny być tylko odstępstwami już opisanymi).
-8. **Zgłoś się w czacie:** ścieżka dziennika, kroki zrobione / pominięte / zablokowane, liczba commitów w każdym repozytorium, liczba odstępstw od planu, wiersze macierzy bez zielonego testu, wynik pełnego budowania. Zaproponuj następne kroki łańcucha: `/java-backend:java-code-review <KLUCZ>` (review przed pull requestem) i `/java-backend:smoke-testing-locally <KLUCZ>`. Nie pushuj.
+8. **Pętla weryfikacji z analizą** — maksymalnie 5 iteracji. Macierz sprawdza tylko to, co do niej trafiło, a testy pisał ten sam agent co kod; ta pętla porównuje gotowy kod z samą analizą. Każda iteracja:
+   1. **Uruchom nowego subagenta** (narzędzie Agent, świeży kontekst w każdej iteracji). Dostaje tylko lokalną kopię analizy (`IMPLEMENTATION_PLAN/.analiza/<KLUCZ>-analiza.md`) i diff zadania (`git diff <gałąź bazowa>...HEAD` w każdym zmienionym repozytorium) — bez planu, dziennika i Twoich wniosków, żeby nie potwierdzał Twojej interpretacji. Zadanie: przejść analizę regułę po regule (REG, kryteria akceptacji, przepływ krok po kroku, kody błędów i komunikaty, kontrakt, zapisy do bazy, przypadki brzegowe, uprawnienia) i dla każdej wskazać, czy kod ją realizuje. Zwraca listę rozbieżności: reguła z odnośnikiem `analiza:linia`, miejsce w kodzie `ścieżka:linia` (albo „brak implementacji”), co się nie zgadza.
+   2. **Oceń każdą rozbieżność.** Prawdziwa → do poprawki. Fałszywa (subagent źle odczytał kod lub analizę, albo reguła jest w „Poza zakresem” lub rozstrzygnięta inaczej w „Rozstrzygniętych pytaniach”) → oznacz jako odrzuconą z uzasadnieniem i źródłem. Rozbieżność, której poprawka zmienia zakres albo model danych → pytanie (jak w „Kiedy zapytać”).
+   3. **Popraw prawdziwe rozbieżności** tak jak krok planu: najpierw test, który jest czerwony, potem kod, zielony test kroku i zielone testy modułu, checklista, jeden commit na iterację (`<KLUCZ> Align <co> with analysis`, w treści numer iteracji i identyfikatory reguł). Dodaj wiersze do sekcji „Weryfikacja z analizą” w dzienniku.
+   4. **Warunek końca:** iteracja bez nowych rozbieżności do poprawki (odrzucone, które wracają, nie są nowe) kończy pętlę. Po 5. iteracji z rozbieżnościami nadal do poprawki — przerwij i pokaż je programiście.
+   5. **Zapętlenie:** jeżeli wraca rozbieżność, którą w poprzedniej iteracji już poprawiłeś (ta sama reguła albo to samo miejsce w kodzie — także gdy poprawka jednej reguły psuje inną, a jej poprawka psuje pierwszą), nie poprawiaj jej drugi raz. Zatrzymaj pętlę i zadaj pytanie w formacie z „Format pytań”: cytat reguły z analizy, obie wersje kodu (przed i po poprzedniej poprawce, z hashami commitów), dlaczego wróciła, hipoteza, którą interpretację przyjąć. Po odpowiedzi popraw według niej i kontynuuj pętlę od kolejnej iteracji (licznik iteracji się nie zeruje).
+9. **Zgłoś się w czacie:** ścieżka dziennika, kroki zrobione / pominięte / zablokowane, liczba commitów w każdym repozytorium, liczba odstępstw od planu, wiersze macierzy bez zielonego testu, wynik pełnego budowania, wynik pętli weryfikacji (liczba iteracji, rozbieżności poprawione / odrzucone / otwarte, czy zakończyła się przez brak rozbieżności, limit czy zapętlenie). Zaproponuj następne kroki łańcucha: `/java-backend:java-code-review <KLUCZ>` (review przed pull requestem) i `/java-backend:smoke-testing-locally <KLUCZ>`. Nie pushuj.
 
 ## Standardy projektu w praktyce
 
@@ -121,6 +127,8 @@ Warianty: (a) to samo pole, (b) nowe pole `settlement_date` typu DATE obok.
 | Krok zależy od otwartego pytania do analityka bez odpowiedzi | Zapytaj programistę, czy odpowiedź już jest; bez niej oznacz krok „zablokowany” i idź dalej z krokami niezależnymi. |
 | Wersja zmienionej biblioteki nie trafia do usługi | Zapytaj, nie zmieniaj plików budowania. |
 | Programista prosi o push albo pull request | Podaj komendę, nie wykonuj jej w ramach skilla. |
+| Pętla weryfikacji: wraca rozbieżność poprawiona w poprzedniej iteracji | Nie poprawiaj drugi raz — zatrzymaj pętlę i zapytaj, którą interpretację analizy przyjąć. |
+| Pętla weryfikacji: po 5 iteracjach nadal są rozbieżności do poprawki | Przerwij i pokaż listę otwartych rozbieżności. |
 | Odpowiedź jest w planie, w „Rozstrzygniętych pytaniach”, w lokalnej kopii analizy albo w sąsiednim kodzie | Nie pytaj — użyj jej i podaj źródło w dzienniku. |
 
 ## Output
@@ -171,6 +179,16 @@ Testy przed startem: <repozytorium: zielone | czerwone: <lista testów>>
 | REG-01 | `PaymentScheduleIT.shouldReject_whenDueDateInPast` | zielony, był czerwony przed krokiem 3 | 3 |
 | REG-02 | brak testu — uzasadnienie z planu | — | 2 |
 
+## Weryfikacja z analizą
+
+| Iteracja | Reguła (analiza:linia) | Rozbieżność | Decyzja | Commit |
+|---|---|---|---|---|
+| 1 | REG-04 (`.analiza/PROJ-123-analiza.md:88`) | brak kodu błędu `SCHEDULE_CLOSED` | poprawiona, test `shouldReject_whenScheduleClosed` | `<hash>` |
+| 1 | REG-07 (`:112`) | brak walidacji waluty | odrzucona — „Poza zakresem” w planie | — |
+| 2 | — | brak nowych rozbieżności | koniec pętli | — |
+
+Zakończenie: <brak rozbieżności po iteracji N | limit 5 iteracji — otwarte: <lista> | zapętlenie przy <reguła> — pytanie <nr>>
+
 ## Pliki spoza kroków planu
 
 <pliki zmienione w zadaniu, które nie należą do żadnego kroku, z numerem odstępstwa — albo „brak”>
@@ -194,6 +212,8 @@ Testy przed startem: <repozytorium: zielone | czerwone: <lista testów>>
 - Naprawianie testów, które były czerwone przed startem, albo wyłączanie testów, które poczerwieniały po zmianie.
 - Jeden commit na całe zadanie albo commit obejmujący pliki spoza kroku — review przyrostowy w `reviewing-java-commits` pracuje po commitach.
 - `git push`, otwarcie pull requesta, `rebase` albo `reset --hard` w ramach skilla.
+- Weryfikacja z analizą robiona przez tego samego agenta albo subagenta, który dostał plan i dziennik — potwierdzi interpretację zamiast ją sprawdzić.
+- Poprawianie w kółko tej samej rozbieżności w kolejnych iteracjach zamiast zatrzymania pętli i pytania.
 - Dziennik aktualizowany dopiero na końcu — po urwanej sesji kolejna zaczyna od zera.
 - Kontynuacja na podstawie stanu kodu zamiast dziennika, przez co krok „w trakcie” z napisanymi testami liczy się jako zrobiony.
 - Zmiana plików budowania, żeby usługa widziała zmienioną bibliotekę, zamiast publikacji do Maven Local i pytania, gdy wersje się nie zgadzają.
