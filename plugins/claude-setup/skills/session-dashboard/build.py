@@ -39,7 +39,8 @@ TASK_KEY_RE = re.compile(r"(KRYPTO|KWDT|KWD|SME)-(\d+(?:-\d+)*)(?!\d)")
 STAGES = [("feas", "🔍 Wykonalność"), ("plan", "📋 Plan"), ("impl", "🛠 Implementacja"),
           ("review", "🔎 Review"), ("smoke", "🧪 Smoke test"), ("retro", "🔁 Retro")]
 SKILL_STAGE = {"analyzing-confluence-feasibility": "feas", "explaining-confluence-analysis": "feas",
-               "planning-jira-implementation": "plan", "reviewing-java-commits": "review",
+               "planning-jira-implementation": "plan", "implementing-jira-task": "impl",
+               "reviewing-java-commits": "review", "java-code-review": "review",
                "smoke-testing-locally": "smoke", "running-task-retro": "retro"}
 HOST_RE = re.compile(r"https?://[\w.-]*(jira|confluence)[\w.-]*")
 HOSTS = {"jira": os.environ.get("JIRA_URL"), "confluence": os.environ.get("CONFLUENCE_URL")}  # else first seen in prompts

@@ -54,6 +54,8 @@ skills/
             │       └── template.html
             ├── planning-jira-implementation/
             │   └── SKILL.md
+            ├── implementing-jira-task/
+            │   └── SKILL.md
             ├── reviewing-java-commits/
             │   └── SKILL.md
             ├── smoke-testing-locally/
@@ -77,6 +79,7 @@ Aktualne pluginy:
 | `claude-setup` | `/claude-setup:context-statusline` | Konfiguruje `ccstatusline`, żeby status line pokazywał zużycie kontekstu |
 | | `/claude-setup:session-dashboard` | Dashboard sesji Claude Code jako prywatny Artifact na claude.ai, aktualizowany (ten sam URL) przy każdym wywołaniu skilla: zadania (wykonalność → plan → implementacja), uruchomione sesje (busy/idle, ostatni prompt), wpisy z pamięci `project_*.md` z sesjami, które je zapisały, oraz pełna lista sesji z wyszukiwarką — przy każdej sesji `claude --resume <id>`. Bez Claude (lokalny HTML): `python3 plugins/claude-setup/skills/session-dashboard/build.py`. Wymaga `python3`. |
 | `java-backend` | `/java-backend:planning-jira-implementation` | Tworzy plan implementacji backendu z zadania Jira i powiązanej analizy systemowej w Confluence → `IMPLEMENTATION_PLAN/IMPLEMENTATION_PLAN_<KLUCZ>.md`. Wymaga dostępu do Jiry i Confluence (dowolny serwer MCP, CLI albo REST API z tokenem). Zapisuje też lokalną kopię analizy w `IMPLEMENTATION_PLAN/.analiza/` i zadaje pytania z cytatem oraz odnośnikiem do konkretnego fragmentu. Plan zawiera macierz wymagań i testów: każda reguła REG i każde kryterium akceptacji ma identyfikator, źródło i test pisany przed kodem. |
+| | `/java-backend:implementing-jira-task` | Wykonuje plan implementacji krok po kroku w repozytoriach, które plan wymienia: gałąź zadania, testy z macierzy wymagań pisane i czerwone przed kodem, kod według standardów projektu (package-by-feature, jOOQ do odczytów, JPA/Hibernate do zapisów, MapStruct, brak zbędnych interfejsów, konwencje Liquibase), zielone testy modułu i jeden commit na krok. Dziennik → `IMPLEMENTATION_LOG/<KLUCZ>.md` (status kroków, commity, odstępstwa od planu, pytania z odpowiedziami) — kolejna sesja kontynuuje od pierwszego niezrobionego kroku, a retro porównuje plan z rzeczywistością. Gdy plan nie pasuje do kodu, pyta. Nie pushuje i nie otwiera pull requesta. Bez planu odsyła do `planning-jira-implementation`. Tylko ręczne wywołanie. |
 | | `/java-backend:java-code-review` | Ogólny code review zmiany w siedmiu wymiarach: zgodność biznesowa, poprawność, czytelność, architektura, bezpieczeństwo, wydajność oraz standardy projektu (package-by-feature, jOOQ do odczytów, JPA/Hibernate do zapisów, MapStruct, brak zbędnych interfejsów, konwencje Liquibase). Zgodność biznesową sprawdza względem zadania Jira i powiązanej analizy systemowej w Confluence: tabela wymagań ze statusem, miejscem w kodzie i testem. Uwagi oznaczone wagą (Critical / Required / Nit / Consider / FYI), werdykt Approve / Request changes. Raport HTML → `CODE_REVIEW/<gałąź>-java-code-review.html` (szablon w `assets/template.html`). |
 | | `/java-backend:reviewing-java-commits` | Code review pull requesta Java z Bitbucketa (standardy projektu + jakość kodu + zgodność z analizą systemową z Confluence), raport po polsku → `CODE_REVIEW/<gałąź>.md`. Przyjmuje dwa linki: pull request i analizę; bez linku do analizy przegląd nadal się wykonuje, ale raport to odnotowuje. Sprawdza też autoryzację i pokrycie macierzy testami z planu. Gdy raport dla gałęzi już istnieje, działa przyrostowo: przegląda tylko nowe commity i weryfikuje, czy poprzednie uwagi zostały naprawione. |
 | | `/java-backend:analyzing-confluence-feasibility` | Analiza wykonalności rozwiązania opisanego na stronie Confluence — zgodność z modelem bazy danych, spójność kontraktu backend–frontend, wykonalność logiki biznesowej. Raport po polsku: trzy sekcje analizy i sekcja „Pytania do analityka” z blokiem gotowym do wklejenia jako komentarz w Jirze lub Confluence → `ANALIZA_WYKONALNOSCI/<tytuł-strony>.md`. Nie tworzy planu implementacji. |
@@ -450,6 +453,7 @@ claude --plugin-dir ./plugins/claude-setup                    # testuj lokalnie
 /reload-plugins                                               # przeładuj po zmianach
 /claude-setup:context-statusline                              # użyj skilla
 /java-backend:planning-jira-implementation PROJ-123           # plan implementacji z Jiry
+/java-backend:implementing-jira-task PROJ-123                 # implementacja według planu (opcjonalnie numer kroku)
 /java-backend:reviewing-java-commits <link-PR> <link-analizy>  # code review pull requesta
 /java-backend:java-code-review PROJ-123                        # code review + weryfikacja biznesowa
 /java-backend:analyzing-confluence-feasibility <link-strony>  # analiza wykonalności
