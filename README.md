@@ -35,6 +35,9 @@ skills/
     │   └── skills/
     │       ├── context-statusline/
     │       │   └── SKILL.md      # pojedynczy skill
+    │       ├── install-common-things/
+    │       │   ├── SKILL.md
+    │       │   └── assets/statusline-command.sh
     │       └── session-dashboard/
     │           ├── SKILL.md
     │           └── build.py      # generator strony artefaktu
@@ -77,6 +80,7 @@ Aktualne pluginy:
 | Plugin | Skille | Opis |
 | --- | --- | --- |
 | `claude-setup` | `/claude-setup:context-statusline` | Konfiguruje `ccstatusline`, żeby status line pokazywał zużycie kontekstu |
+| | `/claude-setup:install-common-things` | Instaluje standardowy setup Claude Code na nowym komputerze: dwulinijkowy status bar (model, % kontekstu, koszt sesji, pasek limitu 5h, katalog, worktree, branch z liczbą staged/modified). Wymaga `jq` (instaluje, jeśli brak). Tylko ręczne wywołanie. |
 | | `/claude-setup:session-dashboard` | Dashboard sesji Claude Code jako prywatny Artifact na claude.ai, aktualizowany (ten sam URL) przy każdym wywołaniu skilla: zadania (wykonalność → plan → implementacja), uruchomione sesje (busy/idle, ostatni prompt), wpisy z pamięci `project_*.md` z sesjami, które je zapisały, oraz pełna lista sesji z wyszukiwarką — przy każdej sesji `claude --resume <id>`. Bez Claude (lokalny HTML): `python3 plugins/claude-setup/skills/session-dashboard/build.py`. Wymaga `python3`. |
 | `java-backend` | `/java-backend:planning-jira-implementation` | Tworzy plan implementacji backendu z zadania Jira i powiązanej analizy systemowej w Confluence → `IMPLEMENTATION_PLAN/IMPLEMENTATION_PLAN_<KLUCZ>.md`. Wymaga dostępu do Jiry i Confluence (dowolny serwer MCP, CLI albo REST API z tokenem). Zapisuje też lokalną kopię analizy w `IMPLEMENTATION_PLAN/.analiza/` i zadaje pytania z cytatem oraz odnośnikiem do konkretnego fragmentu. Plan zawiera macierz wymagań i testów: każda reguła REG i każde kryterium akceptacji ma identyfikator, źródło i test pisany przed kodem. |
 | | `/java-backend:implementing-jira-task` | Wykonuje plan implementacji krok po kroku w repozytoriach, które plan wymienia: gałąź zadania, testy z macierzy wymagań pisane i czerwone przed kodem, kod według standardów projektu (package-by-feature, jOOQ do odczytów, JPA/Hibernate do zapisów, MapStruct, brak zbędnych interfejsów, konwencje Liquibase), zielone testy modułu i jeden commit na krok. Dziennik → `IMPLEMENTATION_LOG/<KLUCZ>.md` (status kroków, commity, odstępstwa od planu, pytania z odpowiedziami) — kolejna sesja kontynuuje od pierwszego niezrobionego kroku, a retro porównuje plan z rzeczywistością. Gdy plan nie pasuje do kodu, pyta. Nie pushuje i nie otwiera pull requesta. Bez planu odsyła do `planning-jira-implementation`. Tylko ręczne wywołanie. |
