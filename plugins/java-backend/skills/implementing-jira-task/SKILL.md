@@ -75,6 +75,8 @@ Te same sześć standardów sprawdza później `java-code-review`. Tu są zapisa
 
 Obok standardów: walidacja wejścia na granicy (adnotacje na obiekcie żądania albo walidacja w serwisie, zgodnie z tym, jak robi to pakiet obok); kody błędów i komunikaty dokładnie takie, jak w analizie; autoryzacja endpointu (`@PreAuthorize` albo mechanizm z sąsiednich kontrolerów) z testem 403, jeżeli analiza opisuje uprawnienia; parametryzowane zapytania; brak logowania danych osobowych.
 
+Komentarze w kodzie: nie dodawaj komentarzy, które powtarzają, co robi kod (`// zapisz encję`, `// pobierz listę`), opisują zmianę (`// dodane w ABC-123`, `// nowa walidacja`) ani zostawiają zakomentowanego kodu. Komentarz piszesz tylko wtedy, gdy wyjaśnia, dlaczego kod jest taki, a nie oczywisty — nieoczywistą regułę biznesową (z identyfikatorem REG), obejście błędu albo ograniczenie. Javadoc tylko tam, gdzie pakiet obok go ma.
+
 ## Zanim zamkniesz krok
 
 - Każdy wiersz macierzy z pola „Testy (pisane przed kodem)” ma zielony test, który był czerwony przed implementacją.
@@ -85,6 +87,7 @@ Obok standardów: walidacja wejścia na granicy (adnotacje na obiekcie żądania
 - Changeset ma numer, nagłówek, idempotentny zapis danych i jest dołączony do changeloga; kod jOOQ wygenerowany.
 - Kontrakt (ścieżka, metoda, nazwy i typy pól, wymagalność, wartości enumów) zgadza się z analizą co do znaku.
 - Testy modułu zielone, nic nie zignorowane, nic nie usunięte.
+- Brak komentarzy powtarzających kod, opisujących zmianę i zakomentowanego kodu.
 - Commit zawiera tylko pliki kroku; dziennik zaktualizowany.
 
 ## Format pytań
