@@ -37,7 +37,7 @@ Dodatkowa oś: czy każda linia jest potrzebna? Jeśli dostępny jest skill `pon
 
 Czego nie zgłaszaj jako zbędnego: walidacji na granicy zaufania, obsługi błędów chroniącej dane, kontroli uprawnień, testów oraz kodu wymaganego przez standardy projektu (MapStruct, encje JPA, changesety).
 
-Waga: domyślnie **Consider:**. Bez prefiksu (Required), gdy zbędny kod jest duży (na przykład cała klasa, warstwa albo abstrakcja z jedną implementacją) albo duplikuje istniejący helper. Każdy komentarz tej osi pokazuje, co usunąć albo czym zastąpić, i zaczyna się od `[ponytail]`.
+Waga: domyślnie **Do przemyślenia:** (zamiast Consider). Bez prefiksu (Required), gdy zbędny kod jest duży (na przykład cała klasa, warstwa albo abstrakcja z jedną implementacją) albo duplikuje istniejący helper. Każdy komentarz tej osi pokazuje, co usunąć albo czym zastąpić, i zaczyna się od `[ponytail]`.
 
 ### 3. Komentarze pending na Bitbucket
 
@@ -64,7 +64,7 @@ Pomiń uwagę, jeśli w tym samym `path:line` jest już komentarz (Twój albo cu
 <propozycja zmiany: nazwana restrukturyzacja albo fragment kodu>
 ```
 
-Wagi i prefiksy jak w `java-code-review` (Critical / bez prefiksu / Nit / Consider / FYI). Nie wklejaj tokenów, haseł ani danych osobowych z kodu albo z Jiry.
+Wagi i prefiksy jak w `java-code-review` (Critical / bez prefiksu / Kosmetyka / Consider / FYI; zamiast `Nit:` pisz `**Kosmetyka:**`). Nie wklejaj tokenów, haseł ani danych osobowych z kodu albo z Jiry.
 
 **Komentarz liniowy**, gdy linia uwagi jest w diffie:
 
