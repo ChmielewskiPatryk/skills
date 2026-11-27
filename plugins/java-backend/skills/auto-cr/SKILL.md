@@ -2,7 +2,6 @@
 name: auto-cr
 description: Automatyczne code review otwartych pull requestów w bieżącym repozytorium Bitbucket Data Center, w których użytkownik jest recenzentem i jeszcze nie zatwierdził zmian. Dla każdego nowego albo zmienionego od ostatniego przeglądu pull requesta uruchamia java-code-review-on-bb w osobnym subagencie i osobnym worktree, więc wynikiem są wyłącznie komentarze pending na Bitbucket. Pamięta, które commity już przejrzał. Uruchamiane ręcznie (/java-backend:auto-cr) albo cyklicznie (/loop 30m /java-backend:auto-cr).
 argument-hint: "[ID-PR ...] [--force]"
-disable-model-invocation: true
 ---
 
 # Auto CR: przegląd kolejki pull requestów
